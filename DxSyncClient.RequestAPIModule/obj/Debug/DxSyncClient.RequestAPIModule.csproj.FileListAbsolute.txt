@@ -1,0 +1,11 @@
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\bin\Debug\DxSyncClient.RequestAPIModule.dll
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\bin\Debug\DxSyncClient.RequestAPIModule.pdb
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\bin\Debug\DxSync.Common.dll
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\bin\Debug\Newtonsoft.Json.dll
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\bin\Debug\DxSync.Common.pdb
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\bin\Debug\Newtonsoft.Json.xml
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.csprojAssemblyReference.cache
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.csproj.CoreCompileInputs.cache
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.csproj.CopyComplete
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.dll
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.pdb
