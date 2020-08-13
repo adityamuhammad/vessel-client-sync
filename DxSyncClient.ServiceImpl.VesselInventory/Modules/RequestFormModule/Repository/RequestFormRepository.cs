@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
 using System.Transactions;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Repository
@@ -15,33 +14,21 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
     public class RequestFormRepository
     {
         public RequestFormRepository() { }
-        private string _QueryGetRequestFormItemIdIn(string requestFormIds)
-        {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.Append("select RequestFormItemId, RequestFormId, AttachmentPath ");
-            stringBuilder.Append("from RequestFormItem ");
-            stringBuilder.Append("where RequestFormId in (" + requestFormIds + ") ");
-            stringBuilder.Append("and IsHidden = 0");
-            stringBuilder.Append("and SyncStatus = 'NOT SYNC'");
-            return stringBuilder.ToString();
-        }
 
-        private IList<int> GetRequestFormIds()
+        private IEnumerable<int> GetRequestFormIds()
         {
-            IList<int> requestFormIds = new List<int>();
-            using(SqlConnection connection = DbConnectionFactory.VesselInventoryDB())
+            using(IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
             {
-                SqlCommand command = connection.CreateCommand();
-                command.CommandText = "select RequestFormId from RequestForm where SyncStatus = 'NOT SYNC' and Status ='RELEASE' and IsHidden = 0";
-                connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
-                    while (reader.Read())
-                        requestFormIds.Add(int.Parse(reader["RequestFormId"].ToString()));
+                string query = @"select RequestFormId 
+                                from RequestForm 
+                                where SyncStatus = 'NOT SYNC' 
+                                and Status ='RELEASE' 
+                                and IsHidden = 0";
+                return connection.Query<int>(query).ToList();
             }
-            return requestFormIds;
         }
 
-        private Hashtable GuidRequestFormId(IList<int> requestFormIds)
+        private Hashtable GuidRequestFormId(IEnumerable<int> requestFormIds)
         {
             Hashtable hashtable = new Hashtable();
             foreach(var requestFormId in requestFormIds)
@@ -69,7 +56,8 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
         public void GenerateData()
         {
             var requestFormIds = GetRequestFormIds();
-            if (requestFormIds.Count <= 0) return;
+
+            if (requestFormIds.Count() <= 0) return;
 
             string requestFormIds_ = string.Join(",", requestFormIds);
             var now = DateTime.Now;
@@ -80,13 +68,17 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
 
             AddRequestFormIdToSyncRecordStage(tableGuidAndRequestFormId, dxSyncRecordStages);
 
+            string query = @"select RequestFormItemId, RequestFormId, AttachmentPath
+                            from RequestFormItem
+                            where RequestFormId in (" + requestFormIds_ + ") and IsHidden = 0 " +
+                            "and SyncStatus = 'NOT SYNC'";
 
-            using(SqlConnection connection = DbConnectionFactory.VesselInventoryDB())
+            using(IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
             {
-                SqlCommand command = connection.CreateCommand();
-                command.CommandText = _QueryGetRequestFormItemIdIn(requestFormIds_);
+                IDbCommand command = connection.CreateCommand();
+                command.CommandText = query;
                 connection.Open();
-                using (SqlDataReader reader = command.ExecuteReader())
+                using (IDataReader reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
@@ -140,50 +132,33 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
 
         private void UpdateSyncStatusToOnStaging(string requestFormIds_)
         {
-            using (SqlConnection connection = DbConnectionFactory.VesselInventoryDB())
+            using (IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
             {
                 connection.Open();
-                SqlCommand command = connection.CreateCommand();
-                command.CommandText = "update RequestForm set SyncStatus = 'ON STAGING' where RequestFormId in ("+requestFormIds_+")";
-                command.ExecuteNonQuery();
-                command.CommandText = "update RequestFormItem set SyncStatus = 'ON STAGING' where RequestFormId in ("+requestFormIds_+")";
-                command.ExecuteNonQuery();
+                string updateRequestFormQuery = @"update RequestForm 
+                                            set SyncStatus = 'ON STAGING' 
+                                            where RequestFormId in (" + requestFormIds_ + ")";
+                string updateRequestFormItemQuery = @"update RequestFormItem 
+                                                    set SyncStatus = 'ON STAGING' 
+                                                    where RequestFormId in ("+requestFormIds_+")";
+                connection.Execute(updateRequestFormQuery);
+                connection.Execute(updateRequestFormItemQuery);
             }
         }
 
         private void AddToStaging(IList<DxSyncRecordStage> dxSyncRecordStages)
         {
-            using(SqlConnection connection = DbConnectionFactory.SyncVesselInventoryDB())
+            using(IDbConnection connection = DbConnectionFactory.SyncVesselInventoryDB())
             {
                 connection.Open();
-                SqlCommand command = connection.CreateCommand();
-                command.Connection = connection;
-
-                command.CommandText = "insert into SyncOutRecordStage (RecordStageId, RecordStageParentId, ReferenceId, ClientId, StatusStage, EntityName, IsFile, Filename, LastSyncAt) values (@RecordStageId,@RecordStageParentId,@ReferenceId,@ClientId,@StatusStage,@Entityname,@IsFile,@Filename,@LastSyncAt)";
-
-                command.Parameters.Add(new SqlParameter("@RecordStageId", SqlDbType.NChar));
-                command.Parameters.Add(new SqlParameter("@RecordStageParentId", SqlDbType.NChar));
-                command.Parameters.Add(new SqlParameter("@ReferenceId", SqlDbType.NChar));
-                command.Parameters.Add(new SqlParameter("@ClientId", SqlDbType.Int));
-                command.Parameters.Add(new SqlParameter("@StatusStage", SqlDbType.NChar));
-                command.Parameters.Add(new SqlParameter("@EntityName", SqlDbType.NChar));
-                command.Parameters.Add(new SqlParameter("@IsFile", SqlDbType.Bit));
-                command.Parameters.Add(new SqlParameter("@Filename", SqlDbType.NVarChar));
-                command.Parameters.Add(new SqlParameter("@LastSyncAt", SqlDbType.DateTime));
-                foreach(var record in dxSyncRecordStages)
-                {
-                    command.Parameters["@RecordStageId"].Value = record.RecordStageId;
-                    command.Parameters["@RecordStageParentId"].Value = record.RecordStageParentId;
-                    command.Parameters["@ReferenceId"].Value = (object)record.ReferenceId ?? DBNull.Value;
-                    command.Parameters["@ClientId"].Value = record.ClientId;
-                    command.Parameters["@StatusStage"].Value = record.StatusStage;
-                    command.Parameters["@EntityName"].Value = (object)record.EntityName ?? DBNull.Value;
-                    command.Parameters["@IsFile"].Value = record.IsFile;
-                    command.Parameters["@Filename"].Value = (object)record.Filename ?? DBNull.Value;
-                    command.Parameters["@LastSyncAt"].Value = record.LastSyncAt;
-                    command.ExecuteNonQuery();
-                }
-
+                string query = @"insert into SyncOutRecordStage 
+                                (RecordStageId, RecordStageParentId, ReferenceId, 
+                                ClientId, StatusStage, EntityName, IsFile, 
+                                Filename, LastSyncAt) values 
+                                (@RecordStageId,@RecordStageParentId,@ReferenceId,
+                                @ClientId,@StatusStage,@Entityname,@IsFile,
+                                @Filename,@LastSyncAt)";
+                connection.Execute(query, dxSyncRecordStages);
             }
         }
 
@@ -203,7 +178,11 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
         {
             using (IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
             {
-                string query = @"select * from RequestForm where RequestFormId = @RequestFormId";
+                string query = @"select RequestFormId, RequestFormNumber, ProjectNumber,
+                                DepartmentName, TargetDeliveryDate, Status, ShipId,
+                                ShipName, Notes, CreatedDate, CreatedBy, LastModifiedDate,
+                                LastModifiedBy, SyncStatus, IsHidden
+                                from RequestForm where RequestFormId = @RequestFormId";
                 return connection.Query<RequestForm>(query, new { requestFormId }).SingleOrDefault();
             }
         }
@@ -212,7 +191,14 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
         {
             using (IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
             {
-                string query = @"select * from RequestFormItem where RequestFormItemId = @RequestFormItemId";
+                string query = @"select RequestFormItemId, RequestFormId, ItemId, ItemName,
+                                ItemGroupId, ItemDimensionNumber, BrandTypeId, BrandTypeName,
+                                ColorSizeId, ColorSizeName, Qty, Uom, Priority, Reason, Remarks,
+                                AttachmentPath, ItemStatus, LastRequestQty, LastRequestDate, 
+                                LastSupplyQty, LastSupplyDate,Rob, SyncStatus, CreatedDate,
+                                CreatedBy,LastModifiedDate, LastModifiedBy, IsHidden
+                                from RequestFormItem 
+                                where RequestFormItemId = @RequestFormItemId";
                 return connection.Query<RequestFormItem>(query, new { requestFormItemId }).SingleOrDefault();
             }
         }

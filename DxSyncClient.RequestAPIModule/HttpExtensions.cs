@@ -1,6 +1,5 @@
 ﻿using DxSync.Common;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
@@ -51,7 +50,8 @@ namespace DxSyncClient.RequestAPIModule
                 {
                     var url = _url + _queryParameters;
                     string body = JsonConvert.SerializeObject(_body);
-                    var content = new StringContent(body, Encoding.UTF8, "application/json");
+                    string contentType = "application/json";
+                    var content = new StringContent(body, Encoding.UTF8, contentType);
 
                     if(_headers != null)
                     {
