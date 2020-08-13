@@ -37,11 +37,22 @@
     <Reference Include="DxSync.Common">
       <HintPath>..\..\DxSync\DxSync.Common\bin\Debug\DxSync.Common.dll</HintPath>
     </Reference>
+    <Reference Include="DxSync.Entity, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DxSync\DxSync.Entity\bin\Debug\DxSync.Entity.dll</HintPath>
+    </Reference>
     <Reference Include="DxSync.Entity.VesselInventory">
       <HintPath>..\..\DxSync\DxSync.Entity.VesselInventory\bin\Debug\DxSync.Entity.VesselInventory.dll</HintPath>
     </Reference>
     <Reference Include="DxSync.FxLib">
       <HintPath>..\..\DxSync\DxSync.FxLib\bin\Debug\DxSync.FxLib.dll</HintPath>
+    </Reference>
+    <Reference Include="DxSync.Log, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\DxSync\DxSync.Log\bin\Debug\DxSync.Log.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json, Version=12.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.12.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -57,9 +68,8 @@
   <ItemGroup>
     <Compile Include="DbConnectionFactory.cs" />
     <Compile Include="EnvClass.cs" />
-    <Compile Include="Module\RequestForm\Repository\RequestFormRepository.cs" />
-    <Compile Include="Module\RequestForm\RequestFormSync.cs" />
-    <Compile Include="Module\VesselGoodIssued\VesselGoodIssuedSync.cs" />
+    <Compile Include="Modules\RequestFormModule\Repository\RequestFormRepository.cs" />
+    <Compile Include="Modules\RequestFormModule\RequestFormSync.cs" />
     <Compile Include="SyncFactory.cs" />
     <Compile Include="VesselInventorySyncService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -75,9 +85,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Module\VesselGoodIssued\Repository\" />
-    <Folder Include="Module\VesselGoodReceive\" />
-    <Folder Include="Module\VesselGoodReturn\" />
+    <Folder Include="Modules\VesselGoodIssuedModule\Repository\" />
+    <Folder Include="Modules\VesselGoodReceiveModule\" />
+    <Folder Include="Modules\VesselGoodReturnModule\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

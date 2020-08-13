@@ -1,8 +1,7 @@
 ﻿using DxSync.Common;
 using DxSyncClient.RequestAPIModule;
 using DxSyncClient.Service;
-using DxSyncClient.ServiceImpl.VesselInventory.Module.RequestForm;
-using DxSyncClient.ServiceImpl.VesselInventory.Module.VesselGoodIssued;
+using DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule;
 using System.Threading.Tasks;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory
@@ -11,11 +10,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
     public class VesselInventorySyncService : AbstractClientSyncService, IClientSyncService
     {
         private readonly RequestFormSync _requestFormSync;
-        private readonly VesselGoodIssuedSync _vesselGoodIssuedSync;
         public VesselInventorySyncService()
         {
             _requestFormSync = SyncFactory.RequestFormSync;
-            _vesselGoodIssuedSync = SyncFactory.VesselGoodIssuedSync;
         }
         public bool TestConnectToAPIEndPoint()
         {
@@ -38,7 +35,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         public void InitializeData()
         {
             _requestFormSync.InitializeData();
-            _vesselGoodIssuedSync.InitializeData();
         }
 
         public void SyncOut(string token)

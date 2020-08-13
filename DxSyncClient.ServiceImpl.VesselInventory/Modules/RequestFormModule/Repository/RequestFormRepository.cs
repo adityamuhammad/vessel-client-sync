@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
 using System;
 using System.Collections;
@@ -9,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Transactions;
 
-namespace DxSyncClient.ServiceImpl.VesselInventory.Module.RequestForm.Repository
+namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Repository
 {
     public class RequestFormRepository
     {
@@ -188,7 +189,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Module.RequestForm.Repository
 
         public IEnumerable<DxSyncRecordStage> GetSyncRecordStagesRequestForm()
         {
-            using (SqlConnection connection = DbConnectionFactory.SyncVesselInventoryDB())
+            using (IDbConnection connection = DbConnectionFactory.SyncVesselInventoryDB())
             {
                 string query = @"select RecordStageId, RecordStageParentId,
                                 ReferenceId, ClientId,StatusStage, 
@@ -197,5 +198,24 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Module.RequestForm.Repository
                 return connection.Query<DxSyncRecordStage>(query).ToList();
             }
         }
+
+        public RequestForm GetRequestFormData(string requestFormId)
+        {
+            using (IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
+            {
+                string query = @"select * from RequestForm where RequestFormId = @RequestFormId";
+                return connection.Query<RequestForm>(query, new { requestFormId }).SingleOrDefault();
+            }
+        }
+
+        public RequestFormItem GetRequestFormItemData(string requestFormItemId)
+        {
+            using (IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
+            {
+                string query = @"select * from RequestFormItem where RequestFormItemId = @RequestFormItemId";
+                return connection.Query<RequestFormItem>(query, new { requestFormItemId }).SingleOrDefault();
+            }
+        }
+
     }
 }

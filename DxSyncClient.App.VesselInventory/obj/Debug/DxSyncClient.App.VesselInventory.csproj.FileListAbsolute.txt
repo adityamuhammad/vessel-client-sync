@@ -24,3 +24,5 @@ C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSync.Entity.pdb
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSync.Log.dll
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSync.Log.pdb
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSync.Entity.VesselInventory.dll
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSync.Entity.VesselInventory.pdb

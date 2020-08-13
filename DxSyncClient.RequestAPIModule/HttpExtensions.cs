@@ -1,6 +1,6 @@
 ﻿using DxSync.Common;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
@@ -10,7 +10,7 @@ namespace DxSyncClient.RequestAPIModule
 {
     public class HttpExtensions
     {
-        private IDictionary<string, string> _headers =null;
+        private IDictionary<string, string> _headers = new Dictionary<string, string>();
         private object _body;
         private string _queryParameters = string.Empty;
         private string _url;
@@ -49,6 +49,7 @@ namespace DxSyncClient.RequestAPIModule
             {
                 try
                 {
+                    var url = _url + _queryParameters;
                     string body = JsonConvert.SerializeObject(_body);
                     var content = new StringContent(body, Encoding.UTF8, "application/json");
 
@@ -59,7 +60,7 @@ namespace DxSyncClient.RequestAPIModule
                             client.DefaultRequestHeaders.Add(header.Key, header.Value);
                         }
                     }
-                    var result = await client.PostAsync(_url, content);
+                    var result = await client.PostAsync(url, content);
                     var responseData = result.Content.ReadAsStringAsync().Result;
                     return JsonConvert.DeserializeObject<ResponseData>(responseData);
                 } catch (HttpRequestException)
