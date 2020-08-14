@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -37,24 +38,54 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule
             {
                 if (!row.IsFile)
                 {
-                    string endpoint = APISyncEndpoint.SyncOutData;
-                    switch (row.EntityName)
+                    string endpointSyncOut = APISyncEndpoint.SyncOut;
+                    string endpointSyncOutConfirmation = APISyncEndpoint.SyncOutConfirmation;
+
+                    object data = null;
+                    if (row.EntityName == EnvClass.EntityName.RequestForm)
+                        data = _requestFormRepository.GetRequestFormData(row.ReferenceId);
+                    else if (row.EntityName == EnvClass.EntityName.RequestFormItem)
+                        data = _requestFormRepository.GetRequestFormItemData(row.ReferenceId);
+
+                    SendData(endpointSyncOut, row, data);
+                    ConfirmationData();
+                } else
+                {
+                    string endpointSyncOutFileCheck = APISyncEndpoint.SyncOutFileCheck;
+                    string endpointSyncOutFile = APISyncEndpoint.SyncOutFile;
+                    string endpointSyncOutFileConfirmation = APISyncEndpoint.SyncOutFileConfirmation;
+
+                    var fileUpload = EnvClass.Client.UploadPath + row.Filename;
+                    if (File.Exists(fileUpload))
                     {
-                        case EnvClass.EntityName.RequestForm:
-                            var requestForm = _requestFormRepository.GetRequestFormData(row.ReferenceId);
-                            SendData(endpoint, row, requestForm);
-                            break;
-                        case EnvClass.EntityName.RequestFormItem:
-                            var requestFormItem = _requestFormRepository.GetRequestFormItemData(row.ReferenceId);
-                            SendData(endpoint, row, requestFormItem);
-                            break;
-                        default:
-                            break;
+                        var extensions = Path.GetExtension(fileUpload);
+                        byte[] file = File.ReadAllBytes(fileUpload);
+                        int currentSize = 0;
+                        int remainSize = file.Length - currentSize;
+                        const int chunkSize = 2 * 1024;
+                        while (remainSize > 0)
+                        {
+                            int countSize = Math.Min(remainSize, chunkSize);
+                            using(MemoryStream ms = new MemoryStream())
+                            {
+                                ms.Write(file, currentSize, countSize);
+                                byte[] fileChunk = ms.ToArray();
+                                string binaryFileString = Convert.ToBase64String(fileChunk);
+                                //send binaryfilestring
+
+                            }
+                            currentSize += countSize;
+                            remainSize -= countSize;
+                        }
                     }
                 }
                 Console.WriteLine(new String('\t', deep) + row.EntityName + row.ReferenceId + row.Filename);
                 APICall(list, row.RecordStageId, deep);
             }
+
+        }
+        private void ConfirmationData()
+        {
 
         }
 

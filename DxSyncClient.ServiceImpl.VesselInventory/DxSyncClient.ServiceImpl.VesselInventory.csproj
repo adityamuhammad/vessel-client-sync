@@ -70,7 +70,7 @@
     <Compile Include="EnvClass.cs" />
     <Compile Include="Modules\RequestFormModule\Repository\RequestFormRepository.cs" />
     <Compile Include="Modules\RequestFormModule\RequestFormSync.cs" />
-    <Compile Include="SyncFactory.cs" />
+    <Compile Include="ModuleFactory.cs" />
     <Compile Include="VesselInventorySyncService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

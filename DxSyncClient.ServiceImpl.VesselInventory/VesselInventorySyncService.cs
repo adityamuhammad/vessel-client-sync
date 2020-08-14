@@ -12,7 +12,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         private readonly RequestFormSync _requestFormSync;
         public VesselInventorySyncService()
         {
-            _requestFormSync = SyncFactory.RequestFormSync;
+            _requestFormSync = ModuleFactory.RequestFormSync;
         }
         public bool TestConnectToAPIEndPoint()
         {
