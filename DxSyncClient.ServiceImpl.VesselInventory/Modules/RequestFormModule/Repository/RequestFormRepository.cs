@@ -16,7 +16,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
 
         private IEnumerable<int> GetRequestFormIds()
         {
-            using(IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
+            using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
                 string query = @"select RequestFormId 
                                 from RequestForm 
@@ -72,7 +72,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
                             where RequestFormId in (" + requestFormIds_ + ") and IsHidden = 0 " +
                             "and SyncStatus = 'NOT SYNC'";
 
-            using(IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
+            using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
                 IDbCommand command = connection.CreateCommand();
                 command.CommandText = query;
@@ -131,7 +131,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
 
         private void UpdateSyncStatusToOnStaging(string requestFormIds_)
         {
-            using (IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
+            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
                 connection.Open();
                 string updateRequestFormQuery = @"update RequestForm 
@@ -145,9 +145,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
             }
         }
 
-        private void AddToStaging(IList<DxSyncRecordStage> dxSyncRecordStages)
+        private void AddToStaging(IList<DxSyncRecordStage> syncRecordStages)
         {
-            using(IDbConnection connection = DbConnectionFactory.SyncVesselInventoryDB())
+            using(IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
             {
                 connection.Open();
                 string query = @"insert into SyncOutRecordStage 
@@ -157,13 +157,13 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
                                 (@RecordStageId,@RecordStageParentId,@ReferenceId,
                                 @ClientId,@StatusStage,@Entityname,@IsFile,
                                 @Filename,@LastSyncAt)";
-                connection.Execute(query, dxSyncRecordStages);
+                connection.Execute(query, syncRecordStages);
             }
         }
 
         public IEnumerable<DxSyncRecordStage> GetSyncRecordStagesRequestForm()
         {
-            using (IDbConnection connection = DbConnectionFactory.SyncVesselInventoryDB())
+            using (IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
             {
                 string query = @"select RecordStageId, RecordStageParentId,
                                 ReferenceId, ClientId,StatusStage, 
@@ -175,7 +175,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
 
         public RequestForm GetRequestFormData(string requestFormId)
         {
-            using (IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
+            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
                 string query = @"select RequestFormId, RequestFormNumber, ProjectNumber,
                                 DepartmentName, TargetDeliveryDate, Status, ShipId,
@@ -188,7 +188,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
 
         public RequestFormItem GetRequestFormItemData(string requestFormItemId)
         {
-            using (IDbConnection connection = DbConnectionFactory.VesselInventoryDB())
+            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
                 string query = @"select RequestFormItemId, RequestFormId, ItemId, ItemName,
                                 ItemGroupId, ItemDimensionNumber, BrandTypeId, BrandTypeName,
@@ -201,6 +201,5 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Rep
                 return connection.Query<RequestFormItem>(query, new { requestFormItemId }).SingleOrDefault();
             }
         }
-
     }
 }

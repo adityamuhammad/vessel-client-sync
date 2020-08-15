@@ -6,8 +6,6 @@ namespace DxSyncClient.App.VesselInventory
 {
     class Program
     {
-        public static object IClientSyncService { get; private set; }
-
         static void Main(string[] args)
         {
             IClientSyncService clientSync = new VesselInventorySyncService();

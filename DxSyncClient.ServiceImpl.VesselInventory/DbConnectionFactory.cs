@@ -9,13 +9,13 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         {
             return ConfigurationManager.ConnectionStrings[connectionStringName].ConnectionString;
         }
-        public static SqlConnection VesselInventoryDB()
+        public static SqlConnection DBVesselInventory()
         {
-            return new SqlConnection(GetConnectionString("VesselInventoryDB"));
+            return new SqlConnection(GetConnectionString("DBVesselInventory"));
         }
-        public static SqlConnection SyncVesselInventoryDB()
+        public static SqlConnection DBSyncVesselInventory()
         {
-            return new SqlConnection(GetConnectionString("SyncVesselDB"));
+            return new SqlConnection(GetConnectionString("DBSyncClientVesselInventory"));
         }
     }
 }
