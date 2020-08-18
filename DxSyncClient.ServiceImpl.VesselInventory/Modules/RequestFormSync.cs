@@ -56,13 +56,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 
             foreach (var row in collections)
             {
-                if (!row.IsFile)
-                {
-                    ConfirmData(row);
-                } else
-                {
-                    ConfirmFile(row);
-                }
+                if (!row.IsFile) ConfirmData(row);
+                else ConfirmFile(row);
+
                 RequestSyncOutConfirmation(list, row.RecordStageId);
             }
         }
@@ -76,65 +72,70 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 
             foreach (var row in collections)
             {
-                if (!row.IsFile)
-                {
-
-                    object data = null;
-                    if (row.EntityName == EnvClass.EntityName.RequestForm)
-                        data = _requestFormRepository.GetRequestForm(row.ReferenceId);
-                    else if (row.EntityName == EnvClass.EntityName.RequestFormItem)
-                        data = _requestFormRepository.GetRequestFormItem(row.ReferenceId);
-
-                    SendData(row, data);
-                } else
-                {
-                    var fileUpload = EnvClass.Client.UploadPath + row.Filename;
-                    if (File.Exists(fileUpload))
-                    {
-                        int currentSize = CheckFileData(row);
-
-                        //if fetch is not failed
-                        if (currentSize != -1)
-                        {
-
-                            var extensions = Path.GetExtension(fileUpload);
-                            byte[] file = File.ReadAllBytes(fileUpload);
-
-                            int fileSizeClient = file.Length;
-                            int remainSize = fileSizeClient - currentSize;
-                            const int chunkSize = EnvClass.HelperValue.ChunkSize;
-
-                            while (remainSize > 0)
-                            {
-                                int offset = Math.Min(remainSize, chunkSize);
-                                using(MemoryStream ms = new MemoryStream())
-                                {
-                                    ms.Write(file, currentSize, offset);
-                                    byte[] fileChunk = ms.ToArray();
-                                    string binaryFileString = Convert.ToBase64String(fileChunk);
-
-                                    DxSyncFile syncFile = new DxSyncFile();
-                                    syncFile.FilePart = binaryFileString;
-                                    syncFile.FileFormat = extensions;
-                                    syncFile.IsNewFile = (currentSize == 0) ? true : false;
-
-                                    int fileSizeServer = SendFileData(row, syncFile);
-
-                                    if(fileSizeServer == -1) break;
-
-                                    currentSize = fileSizeServer;
-                                    remainSize = fileSizeClient - fileSizeServer;
-                                }
-                            }
-                        }
-                        
-                    }
-                }
+                if (!row.IsFile) SyncData(row);
+                else SyncFile(row);
                 SyncProcessed(row.RecordStageId);
                 RequestSyncOut(list, row.RecordStageId);
             }
 
         }
+
+        private void SyncFile(DxSyncRecordStage row)
+        {
+            var fileUpload = EnvClass.Client.UploadPath + row.Filename;
+            if (File.Exists(fileUpload))
+            {
+                int currentSize = CheckFileData(row);
+
+                //if fetch is not failed
+                if (currentSize != -1)
+                {
+
+                    var extensions = Path.GetExtension(fileUpload);
+                    byte[] file = File.ReadAllBytes(fileUpload);
+
+                    int fileSizeClient = file.Length;
+                    int remainSize = fileSizeClient - currentSize;
+                    const int chunkSize = EnvClass.HelperValue.ChunkSize;
+
+                    while (remainSize > 0)
+                    {
+                        int endSize = Math.Min(remainSize, chunkSize);
+                        using (MemoryStream ms = new MemoryStream())
+                        {
+                            ms.Write(file, currentSize, endSize);
+                            byte[] fileChunk = ms.ToArray();
+                            string binaryFileString = Convert.ToBase64String(fileChunk);
+
+                            DxSyncFile syncFile = new DxSyncFile();
+                            syncFile.FilePart = binaryFileString;
+                            syncFile.FileFormat = extensions;
+                            syncFile.IsNewFile = (currentSize == 0) ? true : false;
+
+                            int fileSizeServer = SendFileData(row, syncFile);
+
+                            if (fileSizeServer == -1) break;
+
+                            currentSize = fileSizeServer;
+                            remainSize = fileSizeClient - fileSizeServer;
+                        }
+                    }
+                }
+
+            }
+        }
+
+        private void SyncData(DxSyncRecordStage row)
+        {
+            object data = null;
+            if (row.EntityName == EnvClass.EntityName.RequestForm)
+                data = _requestFormRepository.GetRequestForm(row.ReferenceId);
+            else if (row.EntityName == EnvClass.EntityName.RequestFormItem)
+                data = _requestFormRepository.GetRequestFormItem(row.ReferenceId);
+
+            SendData(row, data);
+        }
+
         private void ConfirmData(DxSyncRecordStage syncRecordStage)
         {
             string endpoint = APISyncEndpoint.SyncOutConfirmation;

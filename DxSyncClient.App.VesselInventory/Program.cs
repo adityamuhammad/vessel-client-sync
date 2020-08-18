@@ -14,11 +14,14 @@ namespace DxSyncClient.App.VesselInventory
 
             if (clientSync.Connect())
             {
+
                 clientSync.Authenticate();
+                clientSync.SetToken();
                 clientSync.SyncOut();
-                //clientSync.SyncOutConfirmation();
+                clientSync.SyncOutConfirmation();
                 //clientSync.SyncIn();
                 //clientSync.SyncInConfirmation();
+                Console.WriteLine("Done");
             }
 
             Console.ReadKey();

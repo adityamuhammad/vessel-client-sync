@@ -5,6 +5,7 @@
         bool Connect();
         void InitializeData();
         void Authenticate();
+        void SetToken();
         void SyncOut();
         void SyncOutConfirmation();
         void SyncIn();

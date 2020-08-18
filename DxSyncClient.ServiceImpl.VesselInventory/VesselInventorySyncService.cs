@@ -17,19 +17,21 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
             _requestFormSync.InitializeData();
         }
 
-        public void SyncOut()
+        public void SetToken()
         {
             _requestFormSync.SetToken(Token);
+        }
+
+        public void SyncOut()
+        {
             _requestFormSync.SyncOut();
+        }
+        public void SyncOutConfirmation()
+        {
+            _requestFormSync.SetToken(Token);
             _requestFormSync.SyncOutConfirmation();
         }
-
         public void SyncIn()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public void SyncOutConfirmation()
         {
             throw new System.NotImplementedException();
         }
