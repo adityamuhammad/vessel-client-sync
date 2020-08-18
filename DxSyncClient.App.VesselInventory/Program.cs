@@ -12,11 +12,15 @@ namespace DxSyncClient.App.VesselInventory
 
             clientSync.InitializeData();
 
-            bool isConnected = clientSync.TestConnectToAPIEndPoint();
-            if (!isConnected) return;
+            if (clientSync.Connect())
+            {
+                clientSync.Authenticate();
+                clientSync.SyncOut();
+                //clientSync.SyncOutConfirmation();
+                //clientSync.SyncIn();
+                //clientSync.SyncInConfirmation();
+            }
 
-            var token = clientSync.GetAuthenticationToken();
-            clientSync.SyncOut(token);
             Console.ReadKey();
 
         }

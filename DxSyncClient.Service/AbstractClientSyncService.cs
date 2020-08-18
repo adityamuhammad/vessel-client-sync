@@ -12,41 +12,63 @@ namespace DxSyncClient.Service
 {
     public abstract class AbstractClientSyncService
     {
+        private string _username = ConfigurationManager.AppSettings["username"];
+        private string _password = ConfigurationManager.AppSettings["password"];
+
+        protected string Token { get; private set; }
+
         private readonly ILogger _logger;
+
         public AbstractClientSyncService()
         {
             _logger = LoggerFactory.GetLogger("WindowsEventViewer");
         }
-        public string GetAuthenticationToken()
+
+        private Credential Credential
+        {
+            get => new Credential { Username = _username, Password = _password };
+        }
+        public bool Connect()
+        {
+            Task<ResponseData> responseData = Task.Run(async () =>
+            {
+                var httpExtensions = new HttpExtensions(APISyncEndpoint.CheckConnection);
+                return await httpExtensions.GetRaw();
+            });
+            var result = responseData.GetAwaiter().GetResult();
+
+            if(result != null)
+                if (result.StatusCode == HttpResponseCode.OK)
+                    return true;
+
+            return false;
+        }
+
+        public void Authenticate()
         {
 
             const string endpoint = APISyncEndpoint.GetToken;
 
-            var username = ConfigurationManager.AppSettings["username"];
-            var password = ConfigurationManager.AppSettings["password"];
-            Credential credential = new Credential
-            {
-                Username = username,
-                Password = password
-            };
-
             Task<ResponseData> responseData = Task.Run(async () =>
             {
                 var httpExtensions = new HttpExtensions(endpoint);
-                httpExtensions.Body(credential);
+                httpExtensions.Body(Credential);
                 return await httpExtensions.PostRaw();
             });
 
             var result = responseData.GetAwaiter().GetResult();
 
-            if (result is null) return null;
+            if (result != null)
+            {
+                string token = (string)((JObject)result.Data).SelectToken("Token");
+                SetToken(token);
+            }
+            WriteLog(endpoint, result, Credential);
+        }
 
-            JObject data = (JObject)result.Data;
-            string token = (string)data.SelectToken("Token");
-
-            WriteLog(endpoint, result, credential);
-
-            return token;
+        private void SetToken(string token)
+        {
+            Token = token;
         }
 
         private void WriteLog(string endpoint, ResponseData responseData, Credential credential)

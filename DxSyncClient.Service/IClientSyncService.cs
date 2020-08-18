@@ -2,10 +2,12 @@
 {
     public interface IClientSyncService
     {
+        bool Connect();
         void InitializeData();
-        bool TestConnectToAPIEndPoint();
-        string GetAuthenticationToken();
-        void SyncOut(string token);
+        void Authenticate();
+        void SyncOut();
+        void SyncOutConfirmation();
         void SyncIn();
+        void SyncInConfirmation();
     }
 }

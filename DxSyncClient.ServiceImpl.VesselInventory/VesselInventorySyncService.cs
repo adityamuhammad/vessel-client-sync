@@ -1,7 +1,7 @@
 ﻿using DxSync.Common;
 using DxSyncClient.RequestAPIModule;
 using DxSyncClient.Service;
-using DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule;
+using DxSyncClient.ServiceImpl.VesselInventory.Modules;
 using System.Threading.Tasks;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory
@@ -14,32 +14,15 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         {
             _requestFormSync = ModuleFactory.RequestFormSync;
         }
-        public bool TestConnectToAPIEndPoint()
-        {
-            Task<ResponseData> responseData = Task.Run(async () =>
-            {
-                var httpExtensions = new HttpExtensions(APISyncEndpoint.CheckConnection);
-                return await httpExtensions.GetRaw();
-            });
-            var result = responseData.GetAwaiter().GetResult();
-            if(result != null)
-            {
-                if (result.StatusCode == HttpResponseCode.OK)
-                    return true;
-                else
-                    return false;
-            }
-            return false;
-        }
 
         public void InitializeData()
         {
             _requestFormSync.InitializeData();
         }
 
-        public void SyncOut(string token)
+        public void SyncOut()
         {
-            _requestFormSync.SyncOut(token);
+            _requestFormSync.SyncOut(Token);
         }
 
         public void SyncIn()
@@ -47,5 +30,14 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
             throw new System.NotImplementedException();
         }
 
+        public void SyncOutConfirmation()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        public void SyncInConfirmation()
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

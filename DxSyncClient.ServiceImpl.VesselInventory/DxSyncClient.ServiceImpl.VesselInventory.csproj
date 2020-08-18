@@ -68,8 +68,8 @@
   <ItemGroup>
     <Compile Include="DbConnectionFactory.cs" />
     <Compile Include="EnvClass.cs" />
-    <Compile Include="Modules\RequestFormModule\Repository\RequestFormRepository.cs" />
-    <Compile Include="Modules\RequestFormModule\RequestFormSync.cs" />
+    <Compile Include="Repository\RequestFormRepository.cs" />
+    <Compile Include="Modules\RequestFormSync.cs" />
     <Compile Include="ModuleFactory.cs" />
     <Compile Include="VesselInventorySyncService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -84,11 +84,7 @@
       <Name>DxSyncClient.Service</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Modules\VesselGoodIssuedModule\Repository\" />
-    <Folder Include="Modules\VesselGoodReceiveModule\" />
-    <Folder Include="Modules\VesselGoodReturnModule\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>

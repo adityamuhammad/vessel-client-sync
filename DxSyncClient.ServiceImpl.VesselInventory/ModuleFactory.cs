@@ -1,5 +1,5 @@
 ﻿
-using DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule;
+using DxSyncClient.ServiceImpl.VesselInventory.Modules;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory
 {

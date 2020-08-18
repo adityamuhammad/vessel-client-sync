@@ -8,7 +8,7 @@ using System.Data;
 using System.Linq;
 using System.Transactions;
 
-namespace DxSyncClient.ServiceImpl.VesselInventory.Modules.RequestFormModule.Repository
+namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
 {
     public class RequestFormRepository
     {

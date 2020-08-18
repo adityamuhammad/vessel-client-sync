@@ -26,6 +26,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         public static class HelperValue
         {
             public const string Root = "0";
+            public const int ChunkSize = 10 * 1024;
         }
     }
 }
