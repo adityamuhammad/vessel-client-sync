@@ -1,8 +1,5 @@
-﻿using DxSync.Common;
-using DxSyncClient.RequestAPIModule;
-using DxSyncClient.Service;
+﻿using DxSyncClient.Service;
 using DxSyncClient.ServiceImpl.VesselInventory.Modules;
-using System.Threading.Tasks;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory
 {
@@ -22,7 +19,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
 
         public void SyncOut()
         {
-            _requestFormSync.SyncOut(Token);
+            _requestFormSync.SetToken(Token);
+            _requestFormSync.SyncOut();
+            _requestFormSync.SyncOutConfirmation();
         }
 
         public void SyncIn()

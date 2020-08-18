@@ -30,22 +30,50 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
         {
              _requestFormRepository.InitializeData();
         }
-        public void SyncOut(string token)
+        public void SetToken(string token)
         {
-            SetToken(token);
-            var dataSync = _requestFormRepository.GetSyncRecordStages<RequestForm,RequestFormItem>();
-            RequestAPISyncOut(dataSync);
-        }
-        public void SyncOutConfirmation(string token)
-        {
-            SetToken(token);
+            _token = token;
         }
 
-        public void RequestAPISyncOut(IEnumerable<DxSyncRecordStage> list,string parentId = "0", int deep = -1)
+        public void SyncOut()
+        {
+            var data = _requestFormRepository.GetSyncRecordStages
+                <RequestForm,RequestFormItem>(DxSyncStatusStage.UN_SYNC);
+            RequestSyncOut(data);
+        }
+        public void SyncOutConfirmation()
+        {
+            var data = _requestFormRepository.GetSyncRecordStages
+                <RequestForm,RequestFormItem>(DxSyncStatusStage.SYNC_PROCESSED);
+            RequestSyncOutConfirmation(data);
+        }
+
+        private void RequestSyncOutConfirmation(IEnumerable<DxSyncRecordStage> list,string parentId = "0")
         {
             var collections = list.Where(row => row.RecordStageParentId == parentId).ToList();
+
             if (collections.Count <= 0) return;
-            deep++;
+
+            foreach (var row in collections)
+            {
+                if (!row.IsFile)
+                {
+                    ConfirmData(row);
+                } else
+                {
+                    ConfirmFile(row);
+                }
+                RequestSyncOutConfirmation(list, row.RecordStageId);
+            }
+        }
+
+
+        private void RequestSyncOut(IEnumerable<DxSyncRecordStage> list,string parentId = "0")
+        {
+            var collections = list.Where(row => row.RecordStageParentId == parentId).ToList();
+
+            if (collections.Count <= 0) return;
+
             foreach (var row in collections)
             {
                 if (!row.IsFile)
@@ -102,12 +130,71 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
                         
                     }
                 }
-                SetSyncProcessed(row.RecordStageId);
-                Console.WriteLine(new String('\t', deep) + row.EntityName + row.ReferenceId + row.Filename);
-                RequestAPISyncOut(list, row.RecordStageId, deep);
+                SyncProcessed(row.RecordStageId);
+                RequestSyncOut(list, row.RecordStageId);
             }
 
         }
+        private void ConfirmData(DxSyncRecordStage syncRecordStage)
+        {
+            string endpoint = APISyncEndpoint.SyncOutConfirmation;
+            Task<ResponseData> responseData = Task.Run(async () =>
+            {
+                var httpExtensions = new HttpExtensions(endpoint);
+                SetQueryParamsAndHeader(httpExtensions, syncRecordStage);
+                return await httpExtensions.PostRaw();
+            });
+            var result = responseData.GetAwaiter().GetResult();
+
+            WriteLog(endpoint, result, syncRecordStage);
+
+            if (result == null) return;
+
+            if (result.StatusCode == HttpResponseCode.OK)
+            {
+                SyncComplete(syncRecordStage.RecordStageId);
+            } else if( result.StatusCode == HttpResponseCode.NOT_FOUND)
+            {
+                UnSync(syncRecordStage.RecordStageId);
+            }
+        }
+
+        private void ConfirmFile(DxSyncRecordStage syncRecordStage)
+        {
+            var fileUpload = EnvClass.Client.UploadPath + syncRecordStage.Filename;
+            if (File.Exists(fileUpload))
+            {
+                string endpoint = APISyncEndpoint.SyncOutFileConfirmation;
+                byte[] file = File.ReadAllBytes(fileUpload);
+                int totalFileSize = file.Length;
+                DxSyncFile syncFile = new DxSyncFile();
+                syncFile.TotalFileSize = totalFileSize;
+                Task<ResponseData> responseData = Task.Run(async () =>
+                {
+                    var httpExtensions = new HttpExtensions(endpoint);
+                    SetQueryParamsAndHeader(httpExtensions, syncRecordStage);
+                    httpExtensions.Body(syncFile);
+                    return await httpExtensions.PostRaw();
+                });
+                var result = responseData.GetAwaiter().GetResult();
+
+                WriteLog(endpoint, result, syncRecordStage);
+
+                if (result == null) return;
+                if (result.StatusCode == HttpResponseCode.OK)
+                {
+                    int remainFileSize = (int)((JObject)result.Data).SelectToken("RemainFileSize");
+                    if(remainFileSize == 0)
+                    {
+                        SyncComplete(syncRecordStage.RecordStageId);
+                    } else
+                    {
+                        UnSync(syncRecordStage.RecordStageId);
+                    }
+                }
+            }
+        }
+
         private void SendData(DxSyncRecordStage syncRecordStage, object data)
         {
 
@@ -135,6 +222,8 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             });
             var result = responseData.GetAwaiter().GetResult();
 
+            WriteLog(endpoint, result, null);
+
             if (result == null) return -1;
 
             if (result.StatusCode == HttpResponseCode.OK)
@@ -158,6 +247,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
                 return await httpExtensions.PostRaw();
             });
             var result = responseData.GetAwaiter().GetResult();
+
+            WriteLog(endpoint, result, null);
+
             if (result == null) return -1;
 
             if (result.StatusCode == HttpResponseCode.OK)
@@ -168,9 +260,19 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             return -1;
         }
 
-        private void SetSyncProcessed(string recordStageId)
+        private void SyncProcessed(string recordStageId)
         {
-            _requestFormRepository.SetSyncProcessed(recordStageId);
+            _requestFormRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
+        }
+
+        private void SyncComplete(string recordStageId)
+        {
+            _requestFormRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
+        }
+
+        private void UnSync(string recordStageId)
+        {
+            _requestFormRepository.UpdateSync(recordStageId, DxSyncStatusStage.UN_SYNC);
         }
 
         private void WriteLog(string endpoint, ResponseData responseData, object data)
@@ -192,10 +294,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             httpExtensions.AddQueryParam("ReferenceId", syncRecordStage.ReferenceId);
             httpExtensions.AddQueryParam("RecordStageId", syncRecordStage.RecordStageId);
             httpExtensions.AddQueryParam("RecordStageParentId", syncRecordStage.RecordStageParentId);
-        }
-        private void SetToken(string token)
-        {
-            _token = token;
         }
     }
 }
