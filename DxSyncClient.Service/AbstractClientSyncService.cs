@@ -1,12 +1,12 @@
-﻿using DxSync.Common;
+﻿using System;
+using System.Configuration;
+using System.Threading.Tasks;
+using DxSync.Common;
 using DxSync.Entity;
 using DxSync.Log;
 using DxSyncClient.RequestAPIModule;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Configuration;
-using System.Threading.Tasks;
 
 namespace DxSyncClient.Service
 {

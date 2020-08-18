@@ -1,16 +1,16 @@
-﻿using Dapper;
-using DxSync.Entity.VesselInventory;
-using DxSync.FxLib;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Transactions;
+using Dapper;
+using DxSync.Entity.VesselInventory;
+using DxSync.FxLib;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
 {
-    public class RequestFormRepository
+    public class RequestFormRepository : SyncRecordStageRepository
     {
         public RequestFormRepository() { }
 
@@ -52,7 +52,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             }
         }
 
-        public void GenerateData()
+        public void InitializeData()
         {
             var requestFormIds = GetRequestFormIds();
 
@@ -145,35 +145,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             }
         }
 
-        private void AddToStaging(IList<DxSyncRecordStage> syncRecordStages)
-        {
-            using(IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
-            {
-                connection.Open();
-                string query = @"insert into SyncOutRecordStage 
-                                (RecordStageId, RecordStageParentId, ReferenceId, 
-                                ClientId, StatusStage, EntityName, IsFile, 
-                                Filename, LastSyncAt) values 
-                                (@RecordStageId,@RecordStageParentId,@ReferenceId,
-                                @ClientId,@StatusStage,@Entityname,@IsFile,
-                                @Filename,@LastSyncAt)";
-                connection.Execute(query, syncRecordStages);
-            }
-        }
-
-        public IEnumerable<DxSyncRecordStage> GetSyncRecordStagesRequestForm()
-        {
-            using (IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
-            {
-                string query = @"select RecordStageId, RecordStageParentId,
-                                ReferenceId, ClientId,StatusStage, 
-                                EntityName,IsFile,Filename
-                                from SyncOutRecordStage where EntityName in('RequestForm','RequestFormItem')";
-                return connection.Query<DxSyncRecordStage>(query).ToList();
-            }
-        }
-
-        public RequestForm GetRequestFormData(string requestFormId)
+        public RequestForm GetRequestForm(string requestFormId)
         {
             using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
@@ -186,7 +158,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             }
         }
 
-        public RequestFormItem GetRequestFormItemData(string requestFormItemId)
+        public RequestFormItem GetRequestFormItem(string requestFormItemId)
         {
             using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {

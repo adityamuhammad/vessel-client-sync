@@ -8,3 +8,4 @@ C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Deb
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.csproj.CopyComplete
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.dll
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.pdb
+C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.RequestAPIModule\obj\Debug\DxSyncClient.RequestAPIModule.csprojAssemblyReference.cache

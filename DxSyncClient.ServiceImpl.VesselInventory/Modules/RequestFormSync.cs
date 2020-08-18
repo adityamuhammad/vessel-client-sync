@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using DxSync.Common;
+using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
 using DxSync.Log;
 using DxSyncClient.RequestAPIModule;
@@ -27,12 +28,12 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 
         public void InitializeData()
         {
-             _requestFormRepository.GenerateData();
+             _requestFormRepository.InitializeData();
         }
         public void SyncOut(string token)
         {
             SetToken(token);
-            var dataSync = _requestFormRepository.GetSyncRecordStagesRequestForm();
+            var dataSync = _requestFormRepository.GetSyncRecordStages<RequestForm,RequestFormItem>();
             RequestAPISyncOut(dataSync);
         }
         public void SyncOutConfirmation(string token)
@@ -52,9 +53,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 
                     object data = null;
                     if (row.EntityName == EnvClass.EntityName.RequestForm)
-                        data = _requestFormRepository.GetRequestFormData(row.ReferenceId);
+                        data = _requestFormRepository.GetRequestForm(row.ReferenceId);
                     else if (row.EntityName == EnvClass.EntityName.RequestFormItem)
-                        data = _requestFormRepository.GetRequestFormItemData(row.ReferenceId);
+                        data = _requestFormRepository.GetRequestFormItem(row.ReferenceId);
 
                     SendData(row, data);
                 } else
@@ -73,14 +74,14 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 
                             int fileSizeClient = file.Length;
                             int remainSize = fileSizeClient - currentSize;
-                            int chunkSize = EnvClass.HelperValue.ChunkSize;
+                            const int chunkSize = EnvClass.HelperValue.ChunkSize;
 
                             while (remainSize > 0)
                             {
-                                int countSize = Math.Min(remainSize, chunkSize);
+                                int offset = Math.Min(remainSize, chunkSize);
                                 using(MemoryStream ms = new MemoryStream())
                                 {
-                                    ms.Write(file, currentSize, countSize);
+                                    ms.Write(file, currentSize, offset);
                                     byte[] fileChunk = ms.ToArray();
                                     string binaryFileString = Convert.ToBase64String(fileChunk);
 
@@ -101,6 +102,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
                         
                     }
                 }
+                SetSyncProcessed(row.RecordStageId);
                 Console.WriteLine(new String('\t', deep) + row.EntityName + row.ReferenceId + row.Filename);
                 RequestAPISyncOut(list, row.RecordStageId, deep);
             }
@@ -164,6 +166,11 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
                 return currentSize;
             }
             return -1;
+        }
+
+        private void SetSyncProcessed(string recordStageId)
+        {
+            _requestFormRepository.SetSyncProcessed(recordStageId);
         }
 
         private void WriteLog(string endpoint, ResponseData responseData, object data)

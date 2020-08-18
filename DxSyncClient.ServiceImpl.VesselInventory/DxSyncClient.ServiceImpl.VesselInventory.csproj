@@ -71,6 +71,7 @@
     <Compile Include="Repository\RequestFormRepository.cs" />
     <Compile Include="Modules\RequestFormSync.cs" />
     <Compile Include="ModuleFactory.cs" />
+    <Compile Include="Repository\SyncRecordStageRepository.cs" />
     <Compile Include="VesselInventorySyncService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
