@@ -14,44 +14,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
     {
         public RequestFormRepository() { }
 
-        private IEnumerable<int> GetRequestFormIds()
-        {
-            using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
-            {
-                string query = @"select RequestFormId 
-                                from RequestForm 
-                                where SyncStatus = 'NOT SYNC' 
-                                and Status ='RELEASE' 
-                                and IsHidden = 0";
-                return connection.Query<int>(query).ToList();
-            }
-        }
-
-        private Hashtable GuidRequestFormId(IEnumerable<int> requestFormIds)
-        {
-            Hashtable hashtable = new Hashtable();
-            foreach(var requestFormId in requestFormIds)
-                hashtable.Add(requestFormId, Guid.NewGuid());
-            return hashtable;
-        }
-        private void AddRequestFormIdToSyncRecordStage(Hashtable guidRequestFormIds, IList<DxSyncRecordStage> dxSyncRecordStages)
-        {
-            foreach(DictionaryEntry guidRequestFormId in guidRequestFormIds)
-            {
-                dxSyncRecordStages.Add(new DxSyncRecordStage
-                {
-                    RecordStageId = guidRequestFormId.Value.ToString(),
-                    RecordStageParentId = EnvClass.HelperValue.Root,
-                    ReferenceId = guidRequestFormId.Key.ToString(),
-                    ClientId = EnvClass.Client.ClientId,
-                    EntityName = EnvClass.EntityName.RequestForm,
-                    IsFile = false,
-                    LastSyncAt = DateTime.Now,
-                    StatusStage = DxSyncStatusStage.UN_SYNC
-                });
-            }
-        }
-
         public void InitializeData()
         {
             var requestFormIds = GetRequestFormIds();
@@ -59,9 +21,8 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             if (requestFormIds.Count() <= 0) return;
 
             string requestFormIds_ = string.Join(",", requestFormIds);
-            var now = DateTime.Now;
 
-            var tableGuidAndRequestFormId = GuidRequestFormId(requestFormIds);
+            var tableGuidAndRequestFormId = GuidPair(requestFormIds);
 
             IList<DxSyncRecordStage> dxSyncRecordStages = new List<DxSyncRecordStage>();
 
@@ -82,8 +43,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                     while (reader.Read())
                     {
                         var requestFormItemId = reader["RequestFormItemId"].ToString();
+                        var requestFormId = int.Parse(reader["RequestFormId"].ToString());
                         var recordStageId = Guid.NewGuid().ToString();
-                        var recordStageParentId = tableGuidAndRequestFormId[int.Parse(reader["RequestFormId"].ToString())].ToString();
+                        var recordStageParentId = tableGuidAndRequestFormId[requestFormId].ToString();
                         string attachment = reader["AttachmentPath"].ToString();
 
                         dxSyncRecordStages.Add(new DxSyncRecordStage
@@ -95,7 +57,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                             EntityName = EnvClass.EntityName.RequestFormItem,
                             IsFile = false,
                             StatusStage = DxSyncStatusStage.UN_SYNC,
-                            LastSyncAt = now
+                            LastSyncAt = DateTime.Now
                         });
 
                         if (!string.IsNullOrEmpty(attachment))
@@ -110,7 +72,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                                 IsFile = true,
                                 Filename = attachment,
                                 StatusStage = DxSyncStatusStage.UN_SYNC,
-                                LastSyncAt = now
+                                LastSyncAt = DateTime.Now
                             });
                         }
                     }
@@ -119,31 +81,16 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             StageTransactions(dxSyncRecordStages, requestFormIds_);
         }
 
-        public void StageTransactions(IList<DxSyncRecordStage> dxSyncRecordStages, string requestFormIds_)
+        private void StageTransactions(IList<DxSyncRecordStage> dxSyncRecordStages, string requestFormIds_)
         {
             using(TransactionScope scope = new TransactionScope())
             {
-                AddToStaging(dxSyncRecordStages);
+                InsertToStaging(dxSyncRecordStages);
                 UpdateSyncStatusToOnStaging(requestFormIds_);
                 scope.Complete();
             }
         }
 
-        private void UpdateSyncStatusToOnStaging(string requestFormIds_)
-        {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
-            {
-                connection.Open();
-                string updateRequestFormQuery = @"update RequestForm 
-                                            set SyncStatus = 'ON STAGING' 
-                                            where RequestFormId in (" + requestFormIds_ + ")";
-                string updateRequestFormItemQuery = @"update RequestFormItem 
-                                                    set SyncStatus = 'ON STAGING' 
-                                                    where RequestFormId in ("+requestFormIds_+")";
-                connection.Execute(updateRequestFormQuery);
-                connection.Execute(updateRequestFormItemQuery);
-            }
-        }
 
         public RequestForm GetRequestForm(string requestFormId)
         {
@@ -173,5 +120,52 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                 return connection.Query<RequestFormItem>(query, new { requestFormItemId }).SingleOrDefault();
             }
         }
+        private void UpdateSyncStatusToOnStaging(string requestFormIds_)
+        {
+            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            {
+                connection.Open();
+                string updateRequestFormQuery = @"update RequestForm 
+                                            set SyncStatus = 'ON STAGING' 
+                                            where RequestFormId in (" + requestFormIds_ + ")";
+                string updateRequestFormItemQuery = @"update RequestFormItem 
+                                                    set SyncStatus = 'ON STAGING' 
+                                                    where RequestFormId in ("+requestFormIds_+")";
+                connection.Execute(updateRequestFormQuery);
+                connection.Execute(updateRequestFormItemQuery);
+            }
+        }
+
+        private IEnumerable<int> GetRequestFormIds()
+        {
+            using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            {
+                string query = @"select RequestFormId 
+                                from RequestForm 
+                                where SyncStatus = 'NOT SYNC' 
+                                and Status ='RELEASE' 
+                                and IsHidden = 0";
+                return connection.Query<int>(query).ToList();
+            }
+        }
+
+        private void AddRequestFormIdToSyncRecordStage(Hashtable guidRequestFormIds, IList<DxSyncRecordStage> dxSyncRecordStages)
+        {
+            foreach(DictionaryEntry guidRequestFormId in guidRequestFormIds)
+            {
+                dxSyncRecordStages.Add(new DxSyncRecordStage
+                {
+                    RecordStageId = guidRequestFormId.Value.ToString(),
+                    RecordStageParentId = EnvClass.HelperValue.Root,
+                    ReferenceId = guidRequestFormId.Key.ToString(),
+                    ClientId = EnvClass.Client.ClientId,
+                    EntityName = EnvClass.EntityName.RequestForm,
+                    IsFile = false,
+                    LastSyncAt = DateTime.Now,
+                    StatusStage = DxSyncStatusStage.UN_SYNC
+                });
+            }
+        }
+
     }
 }

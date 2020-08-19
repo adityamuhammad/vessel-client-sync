@@ -68,10 +68,13 @@
   <ItemGroup>
     <Compile Include="DbConnectionFactory.cs" />
     <Compile Include="EnvClass.cs" />
+    <Compile Include="Modules\VesselGoodReceiveSync.cs" />
+    <Compile Include="RepositoryFactory.cs" />
     <Compile Include="Repository\RequestFormRepository.cs" />
     <Compile Include="Modules\RequestFormSync.cs" />
     <Compile Include="ModuleFactory.cs" />
     <Compile Include="Repository\SyncRecordStageRepository.cs" />
+    <Compile Include="Repository\VesselGoodReceiveRepository.cs" />
     <Compile Include="VesselInventorySyncService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -6,5 +6,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
     public class ModuleFactory
     {
         public static RequestFormSync RequestFormSync => new RequestFormSync();
+        public static VesselGoodReceiveSync VesselGoodReceiveSync => new VesselGoodReceiveSync();
     }
 }

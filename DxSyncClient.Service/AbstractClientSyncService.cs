@@ -30,31 +30,26 @@ namespace DxSyncClient.Service
         }
         public bool Connect()
         {
-            Task<ResponseData> responseData = Task.Run(async () =>
-            {
-                var httpExtensions = new HttpExtensions(APISyncEndpoint.CheckConnection);
-                return await httpExtensions.GetRaw();
-            });
+            Task<ResponseData> responseData = RequestConnectAsync();
+
             var result = responseData.GetAwaiter().GetResult();
 
-            if(result != null)
+            if (result != null)
                 if (result.StatusCode == HttpResponseCode.OK)
                     return true;
 
             return false;
         }
 
+        private static async Task<ResponseData> RequestConnectAsync()
+        {
+            return await RequestAPI.GetAsync(APISyncEndpoint.CheckConnection);
+        }
+
         public void Authenticate()
         {
-
             const string endpoint = APISyncEndpoint.GetToken;
-
-            Task<ResponseData> responseData = Task.Run(async () =>
-            {
-                var httpExtensions = new HttpExtensions(endpoint);
-                httpExtensions.Body(Credential);
-                return await httpExtensions.PostRaw();
-            });
+            Task<ResponseData> responseData = RequestAuthenticationAsync(endpoint);
 
             var result = responseData.GetAwaiter().GetResult();
 
@@ -64,6 +59,11 @@ namespace DxSyncClient.Service
                 SetToken(token);
             }
             WriteLog(endpoint, result, Credential);
+        }
+
+        private async Task<ResponseData> RequestAuthenticationAsync(string endpoint)
+        {
+            return await RequestAPI.Post(endpoint, Credential);
         }
 
         private void SetToken(string token)

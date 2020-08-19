@@ -1,5 +1,7 @@
 ﻿using Dapper;
 using DxSync.FxLib;
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -8,7 +10,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
 {
     public class SyncRecordStageRepository
     {
-        protected void AddToStaging(IList<DxSyncRecordStage> syncRecordStages)
+        protected void InsertToStaging(IList<DxSyncRecordStage> syncRecordStages)
         {
             using(IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
             {
@@ -52,6 +54,13 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                     StatusStage = statusStage
                 });
             }
+        }
+        protected Hashtable GuidPair(IEnumerable<int> ids)
+        {
+            Hashtable hashtable = new Hashtable();
+            foreach(var id in ids)
+                hashtable.Add(id, Guid.NewGuid());
+            return hashtable;
         }
 
     }

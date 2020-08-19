@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 
 namespace DxSyncClient.RequestAPIModule
 {
-    public class HttpExtensions
+    public class RequestAPI
     {
         private IDictionary<string, string> _headers = new Dictionary<string, string>();
         private object _body;
         private string _queryParameters = string.Empty;
         private string _url;
-        public HttpExtensions() { }
-        public HttpExtensions(string url)
+        public RequestAPI() { }
+        public RequestAPI(string url)
         {
             _url = url;
         }
@@ -42,7 +42,7 @@ namespace DxSyncClient.RequestAPIModule
             _url = url;
         }
 
-        public async Task<ResponseData> PostRaw()
+        public async Task<ResponseData> PostAsync()
         {
             using (HttpClient client = new HttpClient())
             {
@@ -74,7 +74,59 @@ namespace DxSyncClient.RequestAPIModule
             }
         }
 
-        public async Task<ResponseData> GetRaw()
+        public static async Task<ResponseData> Post(string url, object objbody = null, object header = null)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    string data = JsonConvert.SerializeObject(objbody);
+                    string contentType = "application/json";
+                    var content = new StringContent(data, Encoding.UTF8, contentType);
+
+                    if(header != null)
+                    {
+                        foreach (var headerAttr in header.GetType().GetProperties())
+                        {
+                            client.DefaultRequestHeaders.Add(headerAttr.Name, headerAttr.GetValue(header, null).ToString());
+                        }
+                    }
+                    var result = await client.PostAsync(url, content);
+                    var responseData = result.Content.ReadAsStringAsync().Result;
+                    return JsonConvert.DeserializeObject<ResponseData>(responseData);
+                } catch (HttpRequestException)
+                {
+                    return new ResponseData
+                    {
+                        StatusCode = HttpResponseCode.NO_INTERNET_CONNECTION,
+                        Message = Message.NO_INTERNET_CONNECTION
+                    };
+                }
+            }
+
+        }
+
+        public static async Task<ResponseData> GetAsync(string url)
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    var result = await client.GetAsync(url);
+                    var responseData = result.Content.ReadAsStringAsync().Result;
+                    return JsonConvert.DeserializeObject<ResponseData>(responseData);
+                } catch (HttpRequestException)
+                {
+                    return new ResponseData
+                    {
+                        StatusCode = HttpResponseCode.NO_INTERNET_CONNECTION,
+                        Message = Message.NO_INTERNET_CONNECTION
+                    };
+                }
+            }
+        }
+
+        public async Task<ResponseData> GetAsync()
         {
             using (HttpClient client = new HttpClient())
             {

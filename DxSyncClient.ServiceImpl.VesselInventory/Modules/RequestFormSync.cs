@@ -22,7 +22,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
         private string _token;
         public RequestFormSync()
         {
-            _requestFormRepository = new RequestFormRepository();
+            _requestFormRepository = RepositoryFactory.RequestFormRepository;
             _logger = LoggerFactory.GetLogger("WindowsEventViewer");
         }
 
@@ -141,9 +141,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             string endpoint = APISyncEndpoint.SyncOutConfirmation;
             Task<ResponseData> responseData = Task.Run(async () =>
             {
-                var httpExtensions = new HttpExtensions(endpoint);
-                SetQueryParamsAndHeader(httpExtensions, syncRecordStage);
-                return await httpExtensions.PostRaw();
+                var requestAPI = new RequestAPI(endpoint);
+                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
+                return await requestAPI.PostAsync();
             });
             var result = responseData.GetAwaiter().GetResult();
 
@@ -170,12 +170,13 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
                 int totalFileSize = file.Length;
                 DxSyncFile syncFile = new DxSyncFile();
                 syncFile.TotalFileSize = totalFileSize;
+
                 Task<ResponseData> responseData = Task.Run(async () =>
                 {
-                    var httpExtensions = new HttpExtensions(endpoint);
-                    SetQueryParamsAndHeader(httpExtensions, syncRecordStage);
-                    httpExtensions.Body(syncFile);
-                    return await httpExtensions.PostRaw();
+                    var requestAPI = new RequestAPI(endpoint);
+                    SetQueryParamsAndHeader(requestAPI, syncRecordStage);
+                    requestAPI.Body(syncFile);
+                    return await requestAPI.PostAsync();
                 });
                 var result = responseData.GetAwaiter().GetResult();
 
@@ -202,10 +203,10 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             string endpoint = APISyncEndpoint.SyncOut;
             Task<ResponseData> responseData = Task.Run(async () =>
             {
-                var httpExtensions = new HttpExtensions(endpoint);
-                SetQueryParamsAndHeader(httpExtensions, syncRecordStage);
-                httpExtensions.Body(data);
-                return await httpExtensions.PostRaw();
+                var requestAPI = new RequestAPI(endpoint);
+                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
+                requestAPI.Body(data);
+                return await requestAPI.PostAsync();
             });
             var result = responseData.GetAwaiter().GetResult();
             WriteLog(endpoint, result, data);
@@ -217,9 +218,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             string endpoint = APISyncEndpoint.SyncOutFileCheck;
             Task<ResponseData> responseData = Task.Run(async () =>
             {
-                var httpExtensions = new HttpExtensions(endpoint);
-                SetQueryParamsAndHeader(httpExtensions, syncRecordStage);
-                return await httpExtensions.PostRaw();
+                var requestAPI = new RequestAPI(endpoint);
+                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
+                return await requestAPI.PostAsync();
             });
             var result = responseData.GetAwaiter().GetResult();
 
@@ -242,10 +243,10 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             string endpoint = APISyncEndpoint.SyncOutFile;
             Task<ResponseData> responseData = Task.Run(async () =>
             {
-                var httpExtensions = new HttpExtensions(endpoint);
-                SetQueryParamsAndHeader(httpExtensions, syncRecordStage);
-                httpExtensions.Body(data);
-                return await httpExtensions.PostRaw();
+                var requestAPI = new RequestAPI(endpoint);
+                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
+                requestAPI.Body(data);
+                return await requestAPI.PostAsync();
             });
             var result = responseData.GetAwaiter().GetResult();
 
@@ -286,15 +287,15 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             _logger.Write(logMessage);
         }
 
-        private void SetQueryParamsAndHeader(HttpExtensions httpExtensions, DxSyncRecordStage syncRecordStage)
+        private void SetQueryParamsAndHeader(RequestAPI requestAPI, DxSyncRecordStage syncRecordStage)
         {
-            httpExtensions.AddHeader("X-Token", _token);
-            httpExtensions.AddQueryParam("DomainName", EnvClass.Client.ApplicationName);
-            httpExtensions.AddQueryParam("ClientId", EnvClass.Client.ClientId.ToString());
-            httpExtensions.AddQueryParam("EntityName", syncRecordStage.EntityName);
-            httpExtensions.AddQueryParam("ReferenceId", syncRecordStage.ReferenceId);
-            httpExtensions.AddQueryParam("RecordStageId", syncRecordStage.RecordStageId);
-            httpExtensions.AddQueryParam("RecordStageParentId", syncRecordStage.RecordStageParentId);
+            requestAPI.AddHeader("X-Token", _token);
+            requestAPI.AddQueryParam("DomainName", EnvClass.Client.ApplicationName);
+            requestAPI.AddQueryParam("ClientId", EnvClass.Client.ClientId.ToString());
+            requestAPI.AddQueryParam("EntityName", syncRecordStage.EntityName);
+            requestAPI.AddQueryParam("ReferenceId", syncRecordStage.ReferenceId);
+            requestAPI.AddQueryParam("RecordStageId", syncRecordStage.RecordStageId);
+            requestAPI.AddQueryParam("RecordStageParentId", syncRecordStage.RecordStageParentId);
         }
     }
 }
