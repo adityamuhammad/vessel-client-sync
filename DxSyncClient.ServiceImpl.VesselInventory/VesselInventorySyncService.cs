@@ -4,7 +4,7 @@ using DxSyncClient.ServiceImpl.VesselInventory.Modules;
 namespace DxSyncClient.ServiceImpl.VesselInventory
 {
 
-    public class VesselInventorySyncService : AbstractClientSyncService, IClientSyncService
+    public class VesselInventorySyncService : SyncPermission, IClientSyncService
     {
         private readonly RequestFormSync _requestFormSync;
         private readonly VesselGoodReceiveSync _vesselGoodReceiveSync;

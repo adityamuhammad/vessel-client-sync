@@ -74,7 +74,7 @@ namespace DxSyncClient.RequestAPIModule
             }
         }
 
-        public static async Task<ResponseData> Post(string url, object objbody = null, object header = null)
+        public static async Task<ResponseData> PostAsync(string url, object objbody = null, object header = null)
         {
             using (HttpClient client = new HttpClient())
             {

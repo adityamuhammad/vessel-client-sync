@@ -1,11 +1,10 @@
-﻿using DxSync.Log;
+﻿using DxSync.FxLib;
 using DxSync.Entity.VesselInventory;
 using DxSyncClient.ServiceImpl.VesselInventory.Repository;
-using DxSync.FxLib;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 {
-    public class VesselGoodReceiveSync : AbstractSync
+    public class VesselGoodReceiveSync : AbstractModuleClientSync
     {
         private readonly VesselGoodReceiveRepository _vesselGoodReceiveRepository;
         public VesselGoodReceiveSync()
@@ -30,6 +29,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
         public void SyncOutConfirmation()
         {
             var data = _vesselGoodReceiveRepository.GetSyncRecordStages<VesselGoodReceive, VesselGoodReceiveItemReject>(DxSyncStatusStage.SYNC_PROCESSED);
+            ProcessSyncOutConfirmation(data);
         }
 
         protected override void SetSyncProcessed(string recordStageId)

@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 
 namespace DxSyncClient.Service
 {
-    public abstract class AbstractClientSyncService
+    public abstract class SyncPermission
     {
         private string _username = ConfigurationManager.AppSettings["username"];
         private string _password = ConfigurationManager.AppSettings["password"];
@@ -19,7 +19,7 @@ namespace DxSyncClient.Service
 
         private readonly ILogger _logger;
 
-        public AbstractClientSyncService()
+        public SyncPermission()
         {
             _logger = LoggerFactory.GetLogger("WindowsEventViewer");
         }
@@ -63,7 +63,7 @@ namespace DxSyncClient.Service
 
         private async Task<ResponseData> RequestAuthenticationAsync(string endpoint)
         {
-            return await RequestAPI.Post(endpoint, Credential);
+            return await RequestAPI.PostAsync(endpoint, Credential);
         }
 
         private void SetToken(string token)
