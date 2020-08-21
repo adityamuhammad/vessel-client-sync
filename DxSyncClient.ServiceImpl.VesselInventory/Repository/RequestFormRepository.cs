@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using System.Transactions;
 using Dapper;
 using DxSync.Entity.VesselInventory;
@@ -28,10 +28,11 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
 
             AddRequestFormIdToSyncRecordStage(tableGuidAndRequestFormId, dxSyncRecordStages);
 
-            string query = @"select RequestFormItemId, RequestFormId, AttachmentPath
-                            from RequestFormItem
-                            where RequestFormId in (" + requestFormIds_ + ") and IsHidden = 0 " +
-                            "and SyncStatus = 'NOT SYNC'";
+            string query = @"SELECT [RequestFormItemId] ,[RequestFormId] ,[AttachmentPath]
+                            FROM [dbo].[RequestFormItem]
+                            WHERE [RequestFormId] IN (" + requestFormIds_ + ") " +
+                           "AND [IsHidden] = 0 " +
+                           "AND [SyncStatus] = 'NOT SYNC'";
 
             using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
@@ -96,11 +97,12 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
         {
             using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
-                string query = @"select RequestFormId, RequestFormNumber, ProjectNumber,
-                                DepartmentName, TargetDeliveryDate, Status, ShipId,
-                                ShipName, Notes, CreatedDate, CreatedBy, LastModifiedDate,
-                                LastModifiedBy, SyncStatus, IsHidden
-                                from RequestForm where RequestFormId = @RequestFormId";
+                string query = 
+                    @"SELECT [RequestFormId] ,[RequestFormNumber] ,[ProjectNumber] ,[DepartmentName]
+                            ,[TargetDeliveryDate] ,[Status] ,[ShipId] ,[ShipName] ,[Notes] 
+                            ,[CreatedDate] ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] 
+                            ,[SyncStatus] ,[IsHidden]
+                      FROM [dbo].[RequestForm] WHERE [RequestFormId] = @RequestFormId";
                 return connection.Query<RequestForm>(query, new { requestFormId }).SingleOrDefault();
             }
         }
@@ -109,14 +111,14 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
         {
             using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
-                string query = @"select RequestFormItemId, RequestFormId, ItemId, ItemName,
-                                ItemGroupId, ItemDimensionNumber, BrandTypeId, BrandTypeName,
-                                ColorSizeId, ColorSizeName, Qty, Uom, Priority, Reason, Remarks,
-                                AttachmentPath, ItemStatus, LastRequestQty, LastRequestDate, 
-                                LastSupplyQty, LastSupplyDate,Rob, SyncStatus, CreatedDate,
-                                CreatedBy,LastModifiedDate, LastModifiedBy, IsHidden
-                                from RequestFormItem 
-                                where RequestFormItemId = @RequestFormItemId";
+                string query = 
+                    @"SELECT [RequestFormItemId] ,[RequestFormId] ,[ItemId] ,[ItemName]
+                            ,[ItemGroupId] ,[ItemDimensionNumber] ,[BrandTypeId] ,[BrandTypeName]
+                            ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom] ,[Priority] ,[Reason] ,[Remarks]
+                            ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty] ,[LastRequestDate]
+                            ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
+                            ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden]
+                      FROM [dbo].[RequestFormItem] WHERE [RequestFormItemId] = @RequestFormItemId";
                 return connection.Query<RequestFormItem>(query, new { requestFormItemId }).SingleOrDefault();
             }
         }
@@ -125,14 +127,14 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
                 connection.Open();
-                string updateRequestFormQuery = @"update RequestForm 
-                                            set SyncStatus = 'ON STAGING' 
-                                            where RequestFormId in (" + requestFormIds_ + ")";
-                string updateRequestFormItemQuery = @"update RequestFormItem 
-                                                    set SyncStatus = 'ON STAGING' 
-                                                    where RequestFormId in ("+requestFormIds_+")";
-                connection.Execute(updateRequestFormQuery);
-                connection.Execute(updateRequestFormItemQuery);
+                string updateRF = 
+                    @"UPDATE [dbo].[RequestForm] SET [SyncStatus] = 'ON STAGING' 
+                      WHERE [RequestFormId] IN (" + requestFormIds_ + ")";
+                string updateRFItem = 
+                    @"UPDATE [dbo].[RequestFormItem] SET [SyncStatus] = 'ON STAGING' 
+                      WHERE [RequestFormId] IN ("+requestFormIds_+")";
+                connection.Execute(updateRF);
+                connection.Execute(updateRFItem);
             }
         }
 
@@ -140,11 +142,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
         {
             using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
             {
-                string query = @"select RequestFormId 
-                                from RequestForm 
-                                where SyncStatus = 'NOT SYNC' 
-                                and Status ='RELEASE' 
-                                and IsHidden = 0";
+                string query = 
+                    @"SELECT [RequestFormId] FROM [dbo].[RequestForm]
+                      WHERE [SyncStatus] = 'NOT SYNC' AND [Status] = 'RELEASE' and [IsHidden] = 0";
                 return connection.Query<int>(query).ToList();
             }
         }

@@ -15,28 +15,31 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             using(IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
             {
                 connection.Open();
-                string query = @"insert into SyncOutRecordStage 
-                                (RecordStageId, RecordStageParentId, ReferenceId, 
-                                ClientId, StatusStage, EntityName, IsFile, 
-                                Filename, LastSyncAt) values 
-                                (@RecordStageId,@RecordStageParentId,@ReferenceId,
-                                @ClientId,@StatusStage,@Entityname,@IsFile,
-                                @Filename,@LastSyncAt)";
+                string query = 
+                    @"INSERT INTO [dbo].[SyncOutRecordStage]
+                        ([RecordStageId] ,[RecordStageParentId] ,[ReferenceId] 
+                        ,[ClientId] ,[StatusStage] ,[EntityName] ,[IsFile]
+                        ,[Filename] ,[LastSyncAt]) 
+                      VALUES 
+                        (@RecordStageId ,@RecordStageParentId ,@ReferenceId
+                        ,@ClientId ,@StatusStage ,@Entityname ,@IsFile
+                        ,@Filename,@LastSyncAt)";
                 connection.Execute(query, syncRecordStages);
             }
         }
 
-        public IEnumerable<DxSyncRecordStage> GetSyncRecordStages<T1, T2>(string statusStage) where T1: class where T2: class
+        public IEnumerable<DxSyncRecordStage> GetSyncRecordStages<THeader, TDetail>(string statusStage) where THeader: class where TDetail: class
         {
             using (IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
             {
-                string query = @"select RecordStageId, RecordStageParentId,
-                                ReferenceId, ClientId,StatusStage, 
-                                EntityName,IsFile,Filename
-                                from SyncOutRecordStage 
-                                where EntityName 
-                                in('" +typeof(T1).Name + "','" + typeof(T2).Name +  "')" +
-                                "and StatusStage = @StatusStage";
+                string query = 
+                    @"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
+                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename]
+                      FROM [dbo].[SyncOutRecordStage]
+                      WHERE [EntityName] IN
+                            ('" + typeof(THeader).Name + "','" + 
+                                  typeof(TDetail).Name +  "')" +
+                      "AND [StatusStage] = @StatusStage";
                 return connection.Query<DxSyncRecordStage>(query, new { StatusStage = statusStage}).ToList();
             }
         }
@@ -45,9 +48,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
         {
             using(IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
             {
-                string query = @"update SyncOutRecordStage 
-                                set StatusStage = @StatusStage 
-                                where RecordStageId = @RecordStageId";
+                string query = 
+                    @"UPDATE [dbo].[SyncOutRecordStage] SET [StatusStage] = @StatusStage 
+                      WHERE [RecordStageId] = @RecordStageId";
                 connection.Open();
                 connection.Execute(query, new {
                     RecordStageId = recordStageId,

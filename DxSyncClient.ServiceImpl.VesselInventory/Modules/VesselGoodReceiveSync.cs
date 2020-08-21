@@ -21,31 +21,15 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
         }
         public void SyncOut()
         {
-            var data = _vesselGoodReceiveRepository.GetSyncRecordStages
-                <VesselGoodReceive,VesselGoodReceiveItemReject>(DxSyncStatusStage.UN_SYNC);
-            ProcessSyncOut(data);
+            SyncOut<VesselGoodReceive, VesselGoodReceiveItemReject>();
         }
 
         public void SyncOutConfirmation()
         {
-            var data = _vesselGoodReceiveRepository.GetSyncRecordStages<VesselGoodReceive, VesselGoodReceiveItemReject>(DxSyncStatusStage.SYNC_PROCESSED);
-            ProcessSyncOutConfirmation(data);
+            SyncOutConfirmation<VesselGoodReceive, VesselGoodReceiveItemReject>();
         }
 
-        protected override void SetSyncProcessed(string recordStageId)
-        {
-            _vesselGoodReceiveRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
-        }
-        protected override void SetSyncComplete(string recordStageId)
-        {
-            _vesselGoodReceiveRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
-        }
-        protected override void SetUnSync(string recordStageId)
-        {
-            _vesselGoodReceiveRepository.UpdateSync(recordStageId, DxSyncStatusStage.UN_SYNC);
-        }
-
-        protected override object GetData(DxSyncRecordStage recordStage)
+        protected override object GetReferenceData(DxSyncRecordStage recordStage)
         {
             object data = null;
             if (recordStage.EntityName == typeof(VesselGoodReceive).Name)

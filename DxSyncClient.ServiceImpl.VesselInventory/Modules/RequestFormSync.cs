@@ -34,7 +34,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             ProcessSyncOutConfirmation(data);
         }
 
-        protected override object GetData(DxSyncRecordStage row)
+        protected override object GetReferenceData(DxSyncRecordStage row)
         {
             object data = null;
             if (row.EntityName == typeof(RequestForm).Name)
@@ -42,21 +42,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             else if (row.EntityName == typeof(RequestFormItem).Name)
                 data = _requestFormRepository.GetRequestFormItem(row.ReferenceId);
             return data;
-        }
-
-        protected override void SetSyncProcessed(string recordStageId)
-        {
-            _requestFormRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
-        }
-
-        protected override void SetSyncComplete(string recordStageId)
-        {
-            _requestFormRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
-        }
-
-        protected override void SetUnSync(string recordStageId)
-        {
-            _requestFormRepository.UpdateSync(recordStageId, DxSyncStatusStage.UN_SYNC);
         }
 
     }

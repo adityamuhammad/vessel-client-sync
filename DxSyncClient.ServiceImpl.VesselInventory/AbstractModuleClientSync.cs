@@ -8,6 +8,7 @@ using DxSync.Common;
 using DxSync.FxLib;
 using DxSync.Log;
 using DxSyncClient.RequestAPIModule;
+using DxSyncClient.ServiceImpl.VesselInventory.Repository;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -16,15 +17,38 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
     public abstract class AbstractModuleClientSync
     {
         private readonly ILogger _logger;
+        private readonly SyncRecordStageRepository _syncRecordStageRepository;
         protected string Token;
         public AbstractModuleClientSync()
         {
             _logger = LoggerFactory.GetLogger("WindowsEventViewer");
+            _syncRecordStageRepository = RepositoryFactory.SyncRecordStageRepository;
         }
-        protected abstract void SetSyncComplete(string recordStageId);
-        protected abstract void SetUnSync(string recordStageId);
-        protected abstract void SetSyncProcessed(string recordStageId);
-        protected abstract object GetData(DxSyncRecordStage syncRecordStage);
+        protected abstract object GetReferenceData(DxSyncRecordStage syncRecordStage);
+        protected void SetSyncComplete(string recordStageId)
+        {
+            _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
+        }
+        protected void SetUnSync(string recordStageId)
+        {
+            _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.UN_SYNC);
+        }
+        protected void SetSyncProcessed(string recordStageId)
+        {
+            _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
+        }
+
+        protected void SyncOut<THeader,TDetail>() where THeader : class where TDetail: class
+        {
+            var data = _syncRecordStageRepository.GetSyncRecordStages <THeader,TDetail>(DxSyncStatusStage.UN_SYNC);
+            ProcessSyncOut(data);
+        }
+
+        protected void SyncOutConfirmation<THeader, TDetail>() where THeader : class where TDetail : class
+        {
+            var data = _syncRecordStageRepository.GetSyncRecordStages<THeader, TDetail>(DxSyncStatusStage.SYNC_PROCESSED);
+            ProcessSyncOutConfirmation(data);
+        }
 
         /// <summary>
         /// Recursively synchronize data from parent to detail
@@ -74,7 +98,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         /// <param name="row"></param>
         protected void SyncData(DxSyncRecordStage row)
         {
-            object data = GetData(row);
+            object data = GetReferenceData(row);
             SendData(row, data);
         }
 
