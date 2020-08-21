@@ -23,16 +23,18 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         public void SetToken()
         {
             _requestFormSync.SetToken(Token);
+            _vesselGoodReceiveSync.SetToken(Token);
         }
 
         public void SyncOut()
         {
             _requestFormSync.SyncOut();
+            _vesselGoodReceiveSync.SyncOut();
         }
         public void SyncOutConfirmation()
         {
-            _requestFormSync.SetToken(Token);
             _requestFormSync.SyncOutConfirmation();
+            _vesselGoodReceiveSync.SyncOutConfirmation();
         }
         public void SyncIn()
         {

@@ -54,7 +54,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                             RecordStageParentId = recordStageParentId,
                             ReferenceId = requestFormItemId,
                             ClientId = EnvClass.Client.ClientId,
-                            EntityName = EnvClass.EntityName.RequestFormItem,
+                            EntityName = typeof(RequestFormItem).Name,
                             IsFile = false,
                             StatusStage = DxSyncStatusStage.UN_SYNC,
                             LastSyncAt = DateTime.Now
@@ -67,7 +67,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                                 RecordStageId = Guid.NewGuid().ToString(),
                                 RecordStageParentId = recordStageId,
                                 ReferenceId = requestFormItemId,
-                                EntityName = EnvClass.EntityName.RequestFormItem,
+                                EntityName = typeof(RequestFormItem).Name,
                                 ClientId = EnvClass.Client.ClientId,
                                 IsFile = true,
                                 Filename = attachment,
@@ -159,7 +159,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                     RecordStageParentId = EnvClass.HelperValue.Root,
                     ReferenceId = guidRequestFormId.Key.ToString(),
                     ClientId = EnvClass.Client.ClientId,
-                    EntityName = EnvClass.EntityName.RequestForm,
+                    EntityName = typeof(RequestForm).Name,
                     IsFile = false,
                     LastSyncAt = DateTime.Now,
                     StatusStage = DxSyncStatusStage.UN_SYNC

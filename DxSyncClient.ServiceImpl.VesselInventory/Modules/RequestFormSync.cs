@@ -72,8 +72,12 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 
             foreach (var row in collections)
             {
-                if (!row.IsFile) SyncData(row);
-                else SyncFile(row);
+                if (!row.IsFile)
+                {
+                    var data = GetData(row);
+                    SendData(row, data);
+                } else SyncFile(row);
+
                 SyncProcessed(row.RecordStageId);
                 RequestSyncOut(list, row.RecordStageId);
             }
@@ -125,15 +129,14 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             }
         }
 
-        private void SyncData(DxSyncRecordStage row)
+        private object GetData(DxSyncRecordStage row)
         {
             object data = null;
-            if (row.EntityName == EnvClass.EntityName.RequestForm)
+            if (row.EntityName == typeof(RequestForm).Name)
                 data = _requestFormRepository.GetRequestForm(row.ReferenceId);
-            else if (row.EntityName == EnvClass.EntityName.RequestFormItem)
+            else if (row.EntityName == typeof(RequestFormItem).Name)
                 data = _requestFormRepository.GetRequestFormItem(row.ReferenceId);
-
-            SendData(row, data);
+            return data;
         }
 
         private void ConfirmData(DxSyncRecordStage syncRecordStage)
@@ -199,7 +202,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 
         private void SendData(DxSyncRecordStage syncRecordStage, object data)
         {
-
             string endpoint = APISyncEndpoint.SyncOut;
             Task<ResponseData> responseData = Task.Run(async () =>
             {
@@ -286,7 +288,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
                                 + DateTime.Now + "\n " + endpoint + "\n " + body  + "\n" + response ;
             _logger.Write(logMessage);
         }
-
         private void SetQueryParamsAndHeader(RequestAPI requestAPI, DxSyncRecordStage syncRecordStage)
         {
             requestAPI.AddHeader("X-Token", _token);
@@ -297,5 +298,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
             requestAPI.AddQueryParam("RecordStageId", syncRecordStage.RecordStageId);
             requestAPI.AddQueryParam("RecordStageParentId", syncRecordStage.RecordStageParentId);
         }
+
     }
 }

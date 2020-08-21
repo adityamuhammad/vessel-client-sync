@@ -1,17 +1,16 @@
 ﻿using DxSync.Log;
+using DxSync.Entity.VesselInventory;
 using DxSyncClient.ServiceImpl.VesselInventory.Repository;
+using DxSync.FxLib;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
 {
-    public class VesselGoodReceiveSync
+    public class VesselGoodReceiveSync : AbstractSync
     {
-        private readonly ILogger _logger;
         private readonly VesselGoodReceiveRepository _vesselGoodReceiveRepository;
-        private string _token;
         public VesselGoodReceiveSync()
         {
             _vesselGoodReceiveRepository = RepositoryFactory.VesselGoodReceiveRepository;
-            _logger = LoggerFactory.GetLogger("WindowsEventViewer");
         }
         public void InitializeData()
         {
@@ -19,7 +18,41 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
         }
         public void SetToken(string token)
         {
-            _token = token;
+            Token = token;
+        }
+        public void SyncOut()
+        {
+            var data = _vesselGoodReceiveRepository.GetSyncRecordStages
+                <VesselGoodReceive,VesselGoodReceiveItemReject>(DxSyncStatusStage.UN_SYNC);
+            ProcessSyncOut(data);
+        }
+
+        public void SyncOutConfirmation()
+        {
+            var data = _vesselGoodReceiveRepository.GetSyncRecordStages<VesselGoodReceive, VesselGoodReceiveItemReject>(DxSyncStatusStage.SYNC_PROCESSED);
+        }
+
+        protected override void SetSyncProcessed(string recordStageId)
+        {
+            _vesselGoodReceiveRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
+        }
+        protected override void SetSyncComplete(string recordStageId)
+        {
+            _vesselGoodReceiveRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
+        }
+        protected override void SetUnSync(string recordStageId)
+        {
+            _vesselGoodReceiveRepository.UpdateSync(recordStageId, DxSyncStatusStage.UN_SYNC);
+        }
+
+        protected override object GetData(DxSyncRecordStage recordStage)
+        {
+            object data = null;
+            if (recordStage.EntityName == typeof(VesselGoodReceive).Name)
+                data = _vesselGoodReceiveRepository.GetVesselGoodReceive(recordStage.ReferenceId);
+            else if (recordStage.EntityName == typeof(VesselGoodReceiveItemReject).Name)
+                data = _vesselGoodReceiveRepository.GetVesselGoodReceiveItemReject(recordStage.ReferenceId);
+            return data;
         }
 
     }
