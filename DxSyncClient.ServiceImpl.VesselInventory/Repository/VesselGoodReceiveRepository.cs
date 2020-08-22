@@ -149,7 +149,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                 string query = @"SELECT [VesselGoodReceiveId]
                                 FROM [dbo].[VesselGoodReceive]
                                 WHERE  [CreatedDate] < DATEADD(HOUR, -1, GETDATE())
-                                AND [IsHidden] = 0";
+                                AND [IsHidden] = 0 AND SyncStatus = 'NOT SYNC'";
                 return connection.Query<int>(query).ToList();
             }
         }

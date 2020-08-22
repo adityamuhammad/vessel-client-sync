@@ -110,14 +110,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         protected void SendData(DxSyncRecordStage syncRecordStage, object data)
         {
             string endpoint = APISyncEndpoint.SyncOut;
-            Task<ResponseData> responseData = Task.Run(async () =>
-            {
-                var requestAPI = new RequestAPI(endpoint);
-                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
-                requestAPI.Body(data);
-                return await requestAPI.PostAsync();
-            });
-            var result = responseData.GetAwaiter().GetResult();
+
+            var result = PostData(endpoint, syncRecordStage, data);
+
             WriteLog(endpoint, result, data);
         }
 
@@ -128,13 +123,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         protected void ConfirmData(DxSyncRecordStage syncRecordStage)
         {
             string endpoint = APISyncEndpoint.SyncOutConfirmation;
-            Task<ResponseData> responseData = Task.Run(async () =>
-            {
-                var requestAPI = new RequestAPI(endpoint);
-                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
-                return await requestAPI.PostAsync();
-            });
-            var result = responseData.GetAwaiter().GetResult();
+            ResponseData result = PostData(endpoint, syncRecordStage);
 
             WriteLog(endpoint, result, syncRecordStage);
 
@@ -143,7 +132,8 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
             if (result.StatusCode == HttpResponseCode.OK)
             {
                 SetSyncComplete(syncRecordStage.RecordStageId);
-            } else if( result.StatusCode == HttpResponseCode.NOT_FOUND)
+            }
+            else if (result.StatusCode == HttpResponseCode.NOT_FOUND)
             {
                 SetUnSync(syncRecordStage.RecordStageId);
             }
@@ -216,13 +206,8 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         private int CheckFileData(DxSyncRecordStage syncRecordStage)
         {
             string endpoint = APISyncEndpoint.SyncOutFileCheck;
-            Task<ResponseData> responseData = Task.Run(async () =>
-            {
-                var requestAPI = new RequestAPI(endpoint);
-                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
-                return await requestAPI.PostAsync();
-            });
-            var result = responseData.GetAwaiter().GetResult();
+
+            var result = PostData(endpoint, syncRecordStage);
 
             WriteLog(endpoint, result, null);
 
@@ -246,14 +231,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         private int SendFileData(DxSyncRecordStage syncRecordStage, object data)
         {
             string endpoint = APISyncEndpoint.SyncOutFile;
-            Task<ResponseData> responseData = Task.Run(async () =>
-            {
-                var requestAPI = new RequestAPI(endpoint);
-                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
-                requestAPI.Body(data);
-                return await requestAPI.PostAsync();
-            });
-            var result = responseData.GetAwaiter().GetResult();
+            var result = PostData(endpoint, syncRecordStage, data);
 
             WriteLog(endpoint, result, null);
 
@@ -278,19 +256,14 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
             if (File.Exists(fileUpload))
             {
                 string endpoint = APISyncEndpoint.SyncOutFileConfirmation;
-                byte[] file = File.ReadAllBytes(fileUpload);
-                int totalFileSize = file.Length;
-                DxSyncFile syncFile = new DxSyncFile();
-                syncFile.TotalFileSize = totalFileSize;
 
-                Task<ResponseData> responseData = Task.Run(async () =>
-                {
-                    var requestAPI = new RequestAPI(endpoint);
-                    SetQueryParamsAndHeader(requestAPI, syncRecordStage);
-                    requestAPI.Body(syncFile);
-                    return await requestAPI.PostAsync();
-                });
-                var result = responseData.GetAwaiter().GetResult();
+                byte[] file = File.ReadAllBytes(fileUpload);
+
+                int totalFileSize = file.Length;
+
+                DxSyncFile syncFile = new DxSyncFile() { TotalFileSize = totalFileSize };
+
+                var result = PostData(endpoint, syncRecordStage, syncFile);
 
                 WriteLog(endpoint, result, syncRecordStage);
 
@@ -303,6 +276,26 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
                     else SetUnSync(syncRecordStage.RecordStageId);
                 }
             }
+        }
+
+        /// <summary>
+        /// Post data to server endpoint is the url, syncrecordstage is query parameter, data is body
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="syncRecordStage"></param>
+        /// <param name="data"></param>
+        /// <returns></returns>
+        private ResponseData PostData(string endpoint, DxSyncRecordStage syncRecordStage, object data = null)
+        {
+            Task<ResponseData> responseData = Task.Run(async () =>
+            {
+                var requestAPI = new RequestAPI(endpoint);
+                requestAPI.Body(data);
+                SetQueryParamsAndHeader(requestAPI, syncRecordStage);
+                return await requestAPI.PostAsync();
+            });
+            var result = responseData.GetAwaiter().GetResult();
+            return result;
         }
 
         /// <summary>
