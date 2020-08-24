@@ -18,33 +18,42 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
     {
         private readonly ILogger _logger;
         private readonly SyncRecordStageRepository _syncRecordStageRepository;
+
         protected string Token;
         public AbstractModuleClientSync()
         {
             _logger = LoggerFactory.GetLogger("WindowsEventViewer");
             _syncRecordStageRepository = RepositoryFactory.SyncRecordStageRepository;
         }
+
         protected abstract object GetReferenceData(DxSyncRecordStage syncRecordStage);
+
         protected void SetSyncComplete(string recordStageId)
         {
             _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
         }
+
         protected void SetUnSync(string recordStageId)
         {
             _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.UN_SYNC);
         }
+
         protected void SetSyncProcessed(string recordStageId)
         {
             _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
         }
 
-        protected void SyncOut<THeader,TDetail>() where THeader : class where TDetail: class
+        protected void SyncOut<THeader,TDetail>() 
+            where THeader : class 
+            where TDetail: class
         {
             var data = _syncRecordStageRepository.GetSyncRecordStages <THeader,TDetail>(DxSyncStatusStage.UN_SYNC);
             ProcessSyncOut(data);
         }
 
-        protected void SyncOutConfirmation<THeader, TDetail>() where THeader : class where TDetail : class
+        protected void SyncOutConfirmation<THeader, TDetail>() 
+            where THeader : class 
+            where TDetail : class
         {
             var data = _syncRecordStageRepository.GetSyncRecordStages<THeader, TDetail>(DxSyncStatusStage.SYNC_PROCESSED);
             ProcessSyncOutConfirmation(data);
@@ -153,22 +162,22 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         /// 8. Send chunk file until end of file, start at current size, 
         ///    then Convert the chunk of binary to base64string.
         /// </summary>
-        /// <param name="row"></param>
-        private void SyncFile(DxSyncRecordStage row)
+        /// <param name="syncRecordStage"></param>
+        protected void SyncFile(DxSyncRecordStage syncRecordStage)
         {
-            var fileUpload = EnvClass.Client.UploadPath + row.Filename;
+            var fileUpload = EnvClass.Client.UploadPath + syncRecordStage.Filename;
             if (File.Exists(fileUpload))
             {
-                int currentSize = CheckFileData(row);
+                int currentSize = CheckFileData(syncRecordStage);
 
                 if (currentSize != -1)
                 {
-
                     var extensions = Path.GetExtension(fileUpload);
-                    byte[] file = File.ReadAllBytes(fileUpload);
 
+                    byte[] file = File.ReadAllBytes(fileUpload);
                     int fileSizeClient = file.Length;
                     int remainSize = fileSizeClient - currentSize;
+
                     const int chunkSize = EnvClass.HelperValue.ChunkSize;
 
                     while (remainSize > 0)
@@ -180,12 +189,14 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
                             byte[] fileChunk = ms.ToArray();
                             string binaryFileString = Convert.ToBase64String(fileChunk);
 
-                            DxSyncFile syncFile = new DxSyncFile();
-                            syncFile.FilePart = binaryFileString;
-                            syncFile.FileFormat = extensions;
-                            syncFile.IsNewFile = (currentSize == 0) ? true : false;
+                            DxSyncFile syncFile = new DxSyncFile
+                            {
+                                FilePart = binaryFileString,
+                                FileFormat = extensions,
+                                IsNewFile = (currentSize == 0) ? true : false
+                            };
 
-                            int fileSizeServer = SendFileData(row, syncFile);
+                            int fileSizeServer = SendFileData(syncRecordStage, syncFile);
 
                             if (fileSizeServer == -1) break;
 
@@ -194,7 +205,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
                         }
                     }
                 }
-
             }
         }
 
@@ -203,7 +213,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         /// </summary>
         /// <param name="syncRecordStage"></param>
         /// <returns></returns>
-        private int CheckFileData(DxSyncRecordStage syncRecordStage)
+        protected int CheckFileData(DxSyncRecordStage syncRecordStage)
         {
             string endpoint = APISyncEndpoint.SyncOutFileCheck;
 
@@ -228,7 +238,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         /// <param name="syncRecordStage"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        private int SendFileData(DxSyncRecordStage syncRecordStage, object data)
+        protected int SendFileData(DxSyncRecordStage syncRecordStage, object data)
         {
             string endpoint = APISyncEndpoint.SyncOutFile;
             var result = PostData(endpoint, syncRecordStage, data);

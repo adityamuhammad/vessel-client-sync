@@ -18,7 +18,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             if (vesselGoodReceiveIds.Count() <= 0) return;
 
             string vesselGoodReceiveIds_ = string.Join(",", vesselGoodReceiveIds);
-            var now = DateTime.Now;
 
             var tableGuidVesselGoodReceiveId = GuidPair(vesselGoodReceiveIds);
 
