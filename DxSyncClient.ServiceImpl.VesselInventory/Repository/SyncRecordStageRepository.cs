@@ -28,7 +28,9 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
             }
         }
 
-        public IEnumerable<DxSyncRecordStage> GetSyncRecordStages<THeader, TDetail>(string statusStage) where THeader: class where TDetail: class
+        public IEnumerable<DxSyncRecordStage> GetSyncRecordStages<THeader, TDetail>(string statusStage) 
+            where THeader: class 
+            where TDetail: class
         {
             using (IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
             {
@@ -39,6 +41,20 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Repository
                       WHERE [EntityName] IN
                             ('" + typeof(THeader).Name + "','" + 
                                   typeof(TDetail).Name +  "')" +
+                      "AND [StatusStage] = @StatusStage";
+                return connection.Query<DxSyncRecordStage>(query, new { StatusStage = statusStage}).ToList();
+            }
+        }
+
+        public IEnumerable<DxSyncRecordStage> GetSyncRecordStages<TData>(string statusStage)
+        {
+            using (IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
+            {
+                string query = 
+                    @"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
+                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename]
+                      FROM [dbo].[SyncOutRecordStage]
+                      WHERE [EntityName] IN ('" + typeof(TData).Name + "')" +
                       "AND [StatusStage] = @StatusStage";
                 return connection.Query<DxSyncRecordStage>(query, new { StatusStage = statusStage}).ToList();
             }

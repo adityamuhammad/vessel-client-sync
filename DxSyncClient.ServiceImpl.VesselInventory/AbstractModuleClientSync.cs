@@ -45,7 +45,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
 
         protected void SyncOut<THeader,TDetail>() 
             where THeader : class 
-            where TDetail: class
+            where TDetail : class
         {
             var data = _syncRecordStageRepository.GetSyncRecordStages <THeader,TDetail>(DxSyncStatusStage.UN_SYNC);
             ProcessSyncOut(data);
@@ -56,6 +56,18 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
             where TDetail : class
         {
             var data = _syncRecordStageRepository.GetSyncRecordStages<THeader, TDetail>(DxSyncStatusStage.SYNC_PROCESSED);
+            ProcessSyncOutConfirmation(data);
+        }
+
+        protected void SyncOut<TData>()
+        {
+            var data = _syncRecordStageRepository.GetSyncRecordStages<TData>(DxSyncStatusStage.UN_SYNC);
+            ProcessSyncOut(data);
+        }
+
+        protected void SyncOutConfirmation<TData>()
+        {
+            var data = _syncRecordStageRepository.GetSyncRecordStages<TData>(DxSyncStatusStage.SYNC_PROCESSED);
             ProcessSyncOutConfirmation(data);
         }
 
