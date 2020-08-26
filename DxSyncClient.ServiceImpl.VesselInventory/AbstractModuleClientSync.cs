@@ -84,11 +84,12 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
 
             foreach (var row in collections)
             {
+                ProcessSyncOut(list, row.RecordStageId);
+
                 if (row.IsFile) SyncFile(row);
                 else SyncData(row);
 
                 SetSyncProcessed(row.RecordStageId);
-                ProcessSyncOut(list, row.RecordStageId);
             }
 
         }
@@ -106,10 +107,11 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
 
             foreach (var row in collections)
             {
+                ProcessSyncOutConfirmation(list, row.RecordStageId);
+
                 if (row.IsFile) ConfirmFile(row);
                 else ConfirmData(row);
 
-                ProcessSyncOutConfirmation(list, row.RecordStageId);
             }
         }
 
