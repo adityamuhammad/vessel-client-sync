@@ -8,7 +8,7 @@ using DxSyncClient.RequestAPIModule;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DxSyncClient.Service
+namespace DxSyncClient.ServiceImpl.VesselInventory
 {
     public abstract class SyncPermission
     {
@@ -41,11 +41,6 @@ namespace DxSyncClient.Service
             return false;
         }
 
-        private static async Task<ResponseData> RequestConnectAsync()
-        {
-            return await RequestAPI.GetAsync(APISyncEndpoint.CheckConnection);
-        }
-
         public void Authenticate()
         {
             const string endpoint = APISyncEndpoint.GetToken;
@@ -61,6 +56,12 @@ namespace DxSyncClient.Service
             WriteLog(endpoint, result, Credential);
         }
 
+        private static async Task<ResponseData> RequestConnectAsync()
+        {
+            return await RequestAPI.GetAsync(APISyncEndpoint.CheckConnection);
+        }
+
+
         private async Task<ResponseData> RequestAuthenticationAsync(string endpoint)
         {
             return await RequestAPI.PostAsync(endpoint, Credential);
@@ -68,7 +69,7 @@ namespace DxSyncClient.Service
 
         private void SetToken(string token)
         {
-            Token = token;
+            EnvClass.Client.Token = token;
         }
 
         private void WriteLog(string endpoint, ResponseData responseData, Credential credential)

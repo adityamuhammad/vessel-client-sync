@@ -15,10 +15,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory.Modules
         {
              _vesselGoodReceiveRepository.InitializeData();
         }
-        public void SetToken(string token)
-        {
-            Token = token;
-        }
         public void SyncOut()
         {
             SyncOut<VesselGoodReceive, VesselGoodReceiveItemReject>();

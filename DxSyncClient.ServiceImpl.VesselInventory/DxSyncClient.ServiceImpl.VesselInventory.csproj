@@ -73,15 +73,16 @@
     <Compile Include="Modules\VesselGoodJournalSync.cs" />
     <Compile Include="Modules\VesselGoodReceiveSync.cs" />
     <Compile Include="Modules\VesselGoodReturnSync.cs" />
-    <Compile Include="RepositoryFactory.cs" />
+    <Compile Include="Repository\RepositoryFactory.cs" />
     <Compile Include="Repository\RequestFormRepository.cs" />
     <Compile Include="Modules\RequestFormSync.cs" />
-    <Compile Include="ModuleFactory.cs" />
+    <Compile Include="Modules\ModuleFactory.cs" />
     <Compile Include="Repository\SyncRecordStageRepository.cs" />
     <Compile Include="Repository\VesselGoodIssuedRepository.cs" />
     <Compile Include="Repository\VesselGoodJournalRepository.cs" />
     <Compile Include="Repository\VesselGoodReceiveRepository.cs" />
     <Compile Include="Repository\VesselGoodReturnRepository.cs" />
+    <Compile Include="SyncPermission.cs" />
     <Compile Include="VesselInventorySyncService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -89,10 +90,6 @@
     <ProjectReference Include="..\DxSyncClient.RequestAPIModule\DxSyncClient.RequestAPIModule.csproj">
       <Project>{0811281A-C56C-4A5C-B253-FF09455C81A3}</Project>
       <Name>DxSyncClient.RequestAPIModule</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DxSyncClient.Service\DxSyncClient.Service.csproj">
-      <Project>{6736D8E7-403B-4AC2-9DAF-D2E11AB819C7}</Project>
-      <Name>DxSyncClient.Service</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup />

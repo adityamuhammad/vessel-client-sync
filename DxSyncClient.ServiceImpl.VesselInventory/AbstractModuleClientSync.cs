@@ -19,7 +19,8 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         private readonly ILogger _logger;
         private readonly SyncRecordStageRepository _syncRecordStageRepository;
 
-        protected string Token;
+        private string Token = EnvClass.Client.Token;
+
         public AbstractModuleClientSync()
         {
             _logger = LoggerFactory.GetLogger("WindowsEventViewer");

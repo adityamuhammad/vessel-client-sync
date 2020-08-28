@@ -9,6 +9,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
             public static int ClientId => int.Parse(ConfigurationManager.AppSettings["ClientId"]);
             public static string ApplicationName => ConfigurationManager.AppSettings["ApplicationName"];
             public static string UploadPath => ConfigurationManager.AppSettings["UploadPath"];
+            public static string Token { get; set; }
         }
 
         public static class HelperValue

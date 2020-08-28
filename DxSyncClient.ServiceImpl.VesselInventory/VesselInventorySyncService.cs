@@ -1,10 +1,9 @@
-﻿using DxSyncClient.Service;
-using DxSyncClient.ServiceImpl.VesselInventory.Modules;
+﻿using DxSyncClient.ServiceImpl.VesselInventory.Modules;
 
 namespace DxSyncClient.ServiceImpl.VesselInventory
 {
 
-    public class VesselInventorySyncService : SyncPermission, IClientSyncService
+    public class VesselInventorySyncService : SyncPermission
     {
         private readonly RequestFormSync _requestFormSync;
         private readonly VesselGoodReceiveSync _vesselGoodReceiveSync;
@@ -29,15 +28,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
             _vesselGoodJournalSync.InitializeData();
         }
 
-        public void SetToken()
-        {
-            _requestFormSync.SetToken(Token);
-            _vesselGoodReceiveSync.SetToken(Token);
-            _vesselGoodIssuedSync.SetToken(Token);
-            _vesselGoodReturnSync.SetToken(Token);
-            _vesselGoodJournalSync.SetToken(Token);
-        }
-
         public void SyncOut()
         {
             _requestFormSync.SyncOut();
@@ -56,12 +46,11 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         }
         public void SyncIn()
         {
-            throw new System.NotImplementedException();
+            
         }
 
         public void SyncInConfirmation()
         {
-            throw new System.NotImplementedException();
         }
     }
 }

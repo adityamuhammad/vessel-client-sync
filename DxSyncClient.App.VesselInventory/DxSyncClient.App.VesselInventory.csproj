@@ -53,10 +53,6 @@
       <Project>{DE9AD44E-CF32-4BA4-BE81-697C0A2C6C1C}</Project>
       <Name>DxSyncClient.ServiceImpl.VesselInventory</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DxSyncClient.Service\DxSyncClient.Service.csproj">
-      <Project>{6736D8E7-403B-4AC2-9DAF-D2E11AB819C7}</Project>
-      <Name>DxSyncClient.Service</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

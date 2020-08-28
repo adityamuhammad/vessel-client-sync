@@ -1,4 +1,3 @@
-using DxSyncClient.Service;
 using DxSyncClient.ServiceImpl.VesselInventory;
 using System;
 
@@ -8,7 +7,7 @@ namespace DxSyncClient.App.VesselInventory
     {
         static void Main(string[] args)
         {
-            IClientSyncService clientSync = new VesselInventorySyncService();
+            var clientSync = new VesselInventorySyncService();
 
             clientSync.InitializeData();
 
@@ -16,11 +15,16 @@ namespace DxSyncClient.App.VesselInventory
             {
 
                 clientSync.Authenticate();
-                clientSync.SetToken();
+
+                Console.WriteLine("Sync Out Process...");
                 clientSync.SyncOut();
+
+                Console.WriteLine("Sync Out Confirmation Process...");
                 clientSync.SyncOutConfirmation();
-                //clientSync.SyncIn();
-                //clientSync.SyncInConfirmation();
+
+                clientSync.SyncIn();
+                clientSync.SyncInConfirmation();
+
                 Console.WriteLine("Done");
             }
 

@@ -12,10 +12,8 @@ C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\obj\
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\obj\Debug\DxSyncClient.App.VesselInventory.csproj.CopyComplete
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\obj\Debug\DxSyncClient.App.VesselInventory.exe
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\obj\Debug\DxSyncClient.App.VesselInventory.pdb
-C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSyncClient.Service.dll
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSyncClient.ServiceImpl.VesselInventory.dll
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSyncClient.ServiceImpl.VesselInventory.pdb
-C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSyncClient.Service.pdb
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSync.FxLib.dll
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\DxSync.FxLib.pdb
 C:\Users\maditya\source\repos\DxSyncClient\DxSyncClient.App.VesselInventory\bin\Debug\Dapper.dll
