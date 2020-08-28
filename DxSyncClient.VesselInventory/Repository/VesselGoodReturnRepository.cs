@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -15,14 +14,13 @@ namespace DxSyncClient.VesselInventory.Repository
         public void InitializeData()
         {
             var vesselGoodReturnIds = GetVesselGoodReturnIds();
-            if (vesselGoodReturnIds.Count() <= 0) return;
+            if (vesselGoodReturnIds.Count() == 0) return;
 
             string vesselGoodReturnIds_ = string.Join(",", vesselGoodReturnIds);
-            var tableGuidVesselGoodReturnId = GuidPair(vesselGoodReturnIds);
 
             IList<DxSyncRecordStage> dxSyncRecordStages = new List<DxSyncRecordStage>();
 
-            AddVesselGoodReturnIdToSyncRecordStage(tableGuidVesselGoodReturnId, dxSyncRecordStages);
+            AddVesselGoodReturnIdToSyncRecordStage(vesselGoodReturnIds, dxSyncRecordStages);
 
             string query = @"SELECT [VesselGoodReturnItemId], [VesselGoodReturnId] 
                              FROM [dbo].[VesselGoodReturnItem]
@@ -39,7 +37,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 {
                     while (reader.Read())
                     {
-                        AddToRecordStage(tableGuidVesselGoodReturnId, dxSyncRecordStages, reader);
+                        AddToRecordStage(dxSyncRecordStages, reader);
                     }
                 }
             }
@@ -80,14 +78,19 @@ namespace DxSyncClient.VesselInventory.Repository
 
         }
 
-        private static void AddToRecordStage(Hashtable tableGuidVesselGoodReturnId, IList<DxSyncRecordStage> dxSyncRecordStages, IDataReader reader)
+        private static void AddToRecordStage(IList<DxSyncRecordStage> syncRecordStages, IDataReader reader)
         {
             var vesselGoodReturnItemId = reader["VesselGoodReturnItemId"].ToString();
-            var vesselGoodReturnId = int.Parse(reader["VesselGoodReturnId"].ToString());
-            var recordStageId = Guid.NewGuid().ToString();
-            var recordStageParentId = tableGuidVesselGoodReturnId[vesselGoodReturnId].ToString();
+            var vesselGoodReturnId = reader["VesselGoodReturnId"].ToString();
 
-            dxSyncRecordStages.Add(new DxSyncRecordStage
+            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodReturnId).SingleOrDefault();
+
+            var recordStageId = Guid.NewGuid().ToString();
+            var recordStageParentId = parent.RecordStageId;
+
+            parent.DataCount += 1;
+
+            syncRecordStages.Add(new DxSyncRecordStage
             {
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
@@ -123,15 +126,15 @@ namespace DxSyncClient.VesselInventory.Repository
                 connection.Execute(updateGIItemQuery);
             }
         }
-        private void AddVesselGoodReturnIdToSyncRecordStage(Hashtable guidVesselGoodReturnIds, IList<DxSyncRecordStage> dxSyncRecordStages)
+        private void AddVesselGoodReturnIdToSyncRecordStage(IEnumerable<int> vesselGoodReturnIds, IList<DxSyncRecordStage> dxSyncRecordStages)
         {
-            foreach(DictionaryEntry guidVesselGoodReturnId in guidVesselGoodReturnIds)
+            foreach(var vesselGoodReturnId in vesselGoodReturnIds)
             {
                 dxSyncRecordStages.Add(new DxSyncRecordStage
                 {
-                    RecordStageId = guidVesselGoodReturnId.Value.ToString(),
+                    RecordStageId = Guid.NewGuid().ToString(),
                     RecordStageParentId = EnvClass.HelperValue.Root,
-                    ReferenceId = guidVesselGoodReturnId.Key.ToString(),
+                    ReferenceId = vesselGoodReturnId.ToString(),
                     ClientId = EnvClass.Client.ClientId,
                     EntityName = typeof(VesselGoodReturn).Name,
                     IsFile = false,

@@ -2,7 +2,6 @@
 using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -15,14 +14,13 @@ namespace DxSyncClient.VesselInventory.Repository
         public void InitializeData()
         {
             var vesselGoodIssuedIds = GetVesselGoodIssuedIds();
-            if (vesselGoodIssuedIds.Count() <= 0) return;
+            if (vesselGoodIssuedIds.Count() == 0) return;
 
             string vesselGoodIssuedIds_ = string.Join(",", vesselGoodIssuedIds);
-            var tableGuidVesselGoodIssuedId = GuidPair(vesselGoodIssuedIds);
 
-            IList<DxSyncRecordStage> dxSyncRecordStages = new List<DxSyncRecordStage>();
+            IList<DxSyncRecordStage> syncRecordStages = new List<DxSyncRecordStage>();
 
-            AddVesselGoodIssuedIdToSyncRecordStage(tableGuidVesselGoodIssuedId, dxSyncRecordStages);
+            AddVesselGoodIssuedIdToSyncRecordStage(vesselGoodIssuedIds, syncRecordStages);
 
             string query = @"SELECT [VesselGoodIssuedItemId], [VesselGoodIssuedId] 
                              FROM [dbo].[VesselGoodIssuedItem]
@@ -38,11 +36,11 @@ namespace DxSyncClient.VesselInventory.Repository
                 {
                     while (reader.Read())
                     {
-                        AddToRecordStage(tableGuidVesselGoodIssuedId, dxSyncRecordStages, reader);
+                        AddToRecordStage(syncRecordStages, reader);
                     }
                 }
             }
-            StageTransactions(dxSyncRecordStages, vesselGoodIssuedIds_);
+            StageTransactions(syncRecordStages, vesselGoodIssuedIds_);
         }
         public VesselGoodIssued GetVesselGoodIssued(string vesselGoodIssuedId)
         {
@@ -103,14 +101,19 @@ namespace DxSyncClient.VesselInventory.Repository
                 connection.Execute(updateGIItemQuery);
             }
         }
-        private static void AddToRecordStage(Hashtable tableGuidVesselGoodIssuedId, IList<DxSyncRecordStage> dxSyncRecordStages, IDataReader reader)
+        private static void AddToRecordStage(IList<DxSyncRecordStage> syncRecordStages, IDataReader reader)
         {
             var vesselGoodIssuedItemId = reader["VesselGoodIssuedItemId"].ToString();
-            var vesselGoodIssuedId = int.Parse(reader["VesselGoodIssuedId"].ToString());
-            var recordStageId = Guid.NewGuid().ToString();
-            var recordStageParentId = tableGuidVesselGoodIssuedId[vesselGoodIssuedId].ToString();
+            var vesselGoodIssuedId = reader["VesselGoodIssuedId"].ToString();
 
-            dxSyncRecordStages.Add(new DxSyncRecordStage
+            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodIssuedId).SingleOrDefault();
+
+            var recordStageId = Guid.NewGuid().ToString();
+            var recordStageParentId = parent.RecordStageId;
+
+            parent.DataCount += 1;
+
+            syncRecordStages.Add(new DxSyncRecordStage
             {
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
@@ -123,15 +126,15 @@ namespace DxSyncClient.VesselInventory.Repository
             });
         }
 
-        private void AddVesselGoodIssuedIdToSyncRecordStage(Hashtable guidVesselGoodIssuedIds, IList<DxSyncRecordStage> dxSyncRecordStages)
+        private void AddVesselGoodIssuedIdToSyncRecordStage(IEnumerable<int> vesselGoodIssuedIds, IList<DxSyncRecordStage> dxSyncRecordStages)
         {
-            foreach(DictionaryEntry guidVesselGoodIssuedId in guidVesselGoodIssuedIds)
+            foreach(var vesselGoodIssuedId in vesselGoodIssuedIds)
             {
                 dxSyncRecordStages.Add(new DxSyncRecordStage
                 {
-                    RecordStageId = guidVesselGoodIssuedId.Value.ToString(),
+                    RecordStageId = Guid.NewGuid().ToString(),
                     RecordStageParentId = EnvClass.HelperValue.Root,
-                    ReferenceId = guidVesselGoodIssuedId.Key.ToString(),
+                    ReferenceId = vesselGoodIssuedId.ToString(),
                     ClientId = EnvClass.Client.ClientId,
                     EntityName = typeof(VesselGoodIssued).Name,
                     IsFile = false,

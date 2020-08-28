@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -15,14 +14,14 @@ namespace DxSyncClient.VesselInventory.Repository
         public void InitializeData()
         {
             var vesselGoodReceiveIds = GetVesselGoodReceiveIds();
-            if (vesselGoodReceiveIds.Count() <= 0) return;
+
+            if (vesselGoodReceiveIds.Count() == 0) return;
 
             string vesselGoodReceiveIds_ = string.Join(",", vesselGoodReceiveIds);
 
-            var tableGuidVesselGoodReceiveId = GuidPair(vesselGoodReceiveIds);
+            IList<DxSyncRecordStage> syncRecordStages = new List<DxSyncRecordStage>();
 
-            IList<DxSyncRecordStage> dxSyncRecordStages = new List<DxSyncRecordStage>();
-            AddVesselGoodReceiveIdToSyncRecordStage(tableGuidVesselGoodReceiveId, dxSyncRecordStages);
+            AddVesselGoodReceiveIdToSyncRecordStage(vesselGoodReceiveIds, syncRecordStages);
 
             string query = @"SELECT [VesselGoodReceiveItemRejectId], [VesselGoodReceiveId] 
                              FROM [dbo].[VesselGoodReceiveItemReject]
@@ -38,11 +37,11 @@ namespace DxSyncClient.VesselInventory.Repository
                 {
                     while (reader.Read())
                     {
-                        AddToRecordStage(tableGuidVesselGoodReceiveId, dxSyncRecordStages, reader);
+                        AddToRecordStage(syncRecordStages, reader);
                     }
                 }
             }
-            StageTransactions(dxSyncRecordStages, vesselGoodReceiveIds_);
+            StageTransactions(syncRecordStages, vesselGoodReceiveIds_);
 
         }
 
@@ -78,14 +77,19 @@ namespace DxSyncClient.VesselInventory.Repository
 
         }
 
-        private static void AddToRecordStage(Hashtable tableGuidVesselGoodReceiveId, IList<DxSyncRecordStage> dxSyncRecordStages, IDataReader reader)
+        private static void AddToRecordStage(IList<DxSyncRecordStage> syncRecordStages, IDataReader reader)
         {
             var vesselGoodReceiveItemRejectId = reader["VesselGoodReceiveItemRejectId"].ToString();
-            var vesselGoodReceiveId = int.Parse(reader["VesselGoodReceiveId"].ToString());
-            var recordStageId = Guid.NewGuid().ToString();
-            var recordStageParentId = tableGuidVesselGoodReceiveId[vesselGoodReceiveId].ToString();
+            var vesselGoodReceiveId = reader["VesselGoodReceiveId"].ToString();
 
-            dxSyncRecordStages.Add(new DxSyncRecordStage
+            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodReceiveId).SingleOrDefault();
+
+            var recordStageId = Guid.NewGuid().ToString();
+            var recordStageParentId = parent.RecordStageId;
+
+            parent.DataCount += 1;
+
+            syncRecordStages.Add(new DxSyncRecordStage
             {
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
@@ -124,15 +128,15 @@ namespace DxSyncClient.VesselInventory.Repository
             }
         }
 
-        private void AddVesselGoodReceiveIdToSyncRecordStage(Hashtable guidVesselGoodReceiveIds, IList<DxSyncRecordStage> dxSyncRecordStages)
+        private void AddVesselGoodReceiveIdToSyncRecordStage(IEnumerable<int> vesselGoodReceiveIds, IList<DxSyncRecordStage> dxSyncRecordStages)
         {
-            foreach(DictionaryEntry guidVesselGoodReceiveId in guidVesselGoodReceiveIds)
+            foreach(var vesselGoodReceiveId in vesselGoodReceiveIds)
             {
                 dxSyncRecordStages.Add(new DxSyncRecordStage
                 {
-                    RecordStageId = guidVesselGoodReceiveId.Value.ToString(),
+                    RecordStageId = Guid.NewGuid().ToString(),
                     RecordStageParentId = EnvClass.HelperValue.Root,
-                    ReferenceId = guidVesselGoodReceiveId.Key.ToString(),
+                    ReferenceId = vesselGoodReceiveId.ToString(),
                     ClientId = EnvClass.Client.ClientId,
                     EntityName = typeof(VesselGoodReceive).Name,
                     IsFile = false,

@@ -19,7 +19,6 @@ namespace DxSyncClient.VesselInventory
         private readonly ILogger _logger;
         private readonly SyncRecordStageRepository _syncRecordStageRepository;
 
-
         public AbstractModuleClientSync()
         {
             _logger = LoggerFactory.GetLogger("WindowsEventViewer");
@@ -78,11 +77,9 @@ namespace DxSyncClient.VesselInventory
         /// <param name="parentId"></param>
         protected void ProcessSyncOut(IEnumerable<DxSyncRecordStage> list,string parentId = "0")
         {
-            var collections = list.Where(row => row.RecordStageParentId == parentId).ToList();
+            var children = list.Where(row => row.RecordStageParentId == parentId).ToList();
 
-            if (collections.Count <= 0) return;
-
-            foreach (var row in collections)
+            foreach (var row in children)
             {
                 ProcessSyncOut(list, row.RecordStageId);
 
@@ -101,17 +98,14 @@ namespace DxSyncClient.VesselInventory
         /// <param name="parentId"></param>
         protected void ProcessSyncOutConfirmation(IEnumerable<DxSyncRecordStage> list,string parentId = "0")
         {
-            var collections = list.Where(row => row.RecordStageParentId == parentId).ToList();
+            var children = list.Where(row => row.RecordStageParentId == parentId).ToList();
 
-            if (collections.Count <= 0) return;
-
-            foreach (var row in collections)
+            foreach (var row in children)
             {
                 ProcessSyncOutConfirmation(list, row.RecordStageId);
 
                 if (row.IsFile) ConfirmFile(row);
                 else ConfirmData(row);
-
             }
         }
 
@@ -336,6 +330,7 @@ namespace DxSyncClient.VesselInventory
             requestAPI.AddQueryParam("ReferenceId", syncRecordStage.ReferenceId);
             requestAPI.AddQueryParam("RecordStageId", syncRecordStage.RecordStageId);
             requestAPI.AddQueryParam("RecordStageParentId", syncRecordStage.RecordStageParentId);
+            requestAPI.AddQueryParam("DataCount", syncRecordStage.DataCount.ToString());
         }
 
         /// <summary>

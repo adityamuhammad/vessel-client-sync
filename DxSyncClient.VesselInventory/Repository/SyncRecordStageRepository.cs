@@ -1,7 +1,5 @@
 ﻿using Dapper;
 using DxSync.FxLib;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -19,11 +17,11 @@ namespace DxSyncClient.VesselInventory.Repository
                     @"INSERT INTO [dbo].[SyncOutRecordStage]
                         ([RecordStageId] ,[RecordStageParentId] ,[ReferenceId] 
                         ,[ClientId] ,[StatusStage] ,[EntityName] ,[IsFile]
-                        ,[Filename] ,[LastSyncAt]) 
+                        ,[DataCount], [Filename] ,[LastSyncAt]) 
                       VALUES 
                         (@RecordStageId ,@RecordStageParentId ,@ReferenceId
                         ,@ClientId ,@StatusStage ,@Entityname ,@IsFile
-                        ,@Filename,@LastSyncAt)";
+                        ,@DataCount, @Filename,@LastSyncAt)";
                 connection.Execute(query, syncRecordStages);
             }
         }
@@ -36,7 +34,7 @@ namespace DxSyncClient.VesselInventory.Repository
             {
                 string query = 
                     @"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
-                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename]
+                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount]
                       FROM [dbo].[SyncOutRecordStage]
                       WHERE [EntityName] IN
                             ('" + typeof(THeader).Name + "','" + 
@@ -52,7 +50,7 @@ namespace DxSyncClient.VesselInventory.Repository
             {
                 string query = 
                     @"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
-                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename]
+                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount]
                       FROM [dbo].[SyncOutRecordStage]
                       WHERE [EntityName] IN ('" + typeof(TData).Name + "')" +
                       "AND [StatusStage] = @StatusStage";
@@ -74,13 +72,5 @@ namespace DxSyncClient.VesselInventory.Repository
                 });
             }
         }
-        protected Hashtable GuidPair(IEnumerable<int> ids)
-        {
-            Hashtable hashtable = new Hashtable();
-            foreach(var id in ids)
-                hashtable.Add(id, Guid.NewGuid());
-            return hashtable;
-        }
-
     }
 }

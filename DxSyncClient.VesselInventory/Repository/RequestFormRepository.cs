@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using System.Transactions;
 using Dapper;
@@ -18,15 +17,13 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             var requestFormIds = GetRequestFormIds();
 
-            if (requestFormIds.Count() <= 0) return;
+            if (requestFormIds.Count() == 0) return;
 
             string requestFormIds_ = string.Join(",", requestFormIds);
 
-            var tableGuidAndRequestFormId = GuidPair(requestFormIds);
+            IList<DxSyncRecordStage> syncRecordStages = new List<DxSyncRecordStage>();
 
-            IList<DxSyncRecordStage> dxSyncRecordStages = new List<DxSyncRecordStage>();
-
-            AddRequestFormIdToSyncRecordStage(tableGuidAndRequestFormId, dxSyncRecordStages);
+            AddRequestFormIdToSyncRecordStage(requestFormIds, syncRecordStages);
 
             string query = @"SELECT [RequestFormItemId] ,[RequestFormId] ,[AttachmentPath]
                             FROM [dbo].[RequestFormItem]
@@ -44,43 +41,28 @@ namespace DxSyncClient.VesselInventory.Repository
                     while (reader.Read())
                     {
                         var requestFormItemId = reader["RequestFormItemId"].ToString();
-                        var requestFormId = int.Parse(reader["RequestFormId"].ToString());
-                        var recordStageId = Guid.NewGuid().ToString();
-                        var recordStageParentId = tableGuidAndRequestFormId[requestFormId].ToString();
+                        var requestFormId = reader["RequestFormId"].ToString();
                         string attachment = reader["AttachmentPath"].ToString();
 
-                        dxSyncRecordStages.Add(new DxSyncRecordStage
-                        {
-                            RecordStageId = recordStageId,
-                            RecordStageParentId = recordStageParentId,
-                            ReferenceId = requestFormItemId,
-                            ClientId = EnvClass.Client.ClientId,
-                            EntityName = typeof(RequestFormItem).Name,
-                            IsFile = false,
-                            StatusStage = DxSyncStatusStage.UN_SYNC,
-                            LastSyncAt = DateTime.Now
-                        });
+                        var parent = syncRecordStages.Where(x => x.ReferenceId == requestFormId).SingleOrDefault();
+
+                        var recordStageId = Guid.NewGuid().ToString();
+                        var recordStageParentId = parent.RecordStageId;
+
+                        parent.DataCount += 1;
+                        AddItemToStage(syncRecordStages, requestFormItemId, recordStageId, recordStageParentId);
 
                         if (!string.IsNullOrEmpty(attachment))
                         {
-                            dxSyncRecordStages.Add(new DxSyncRecordStage
-                            {
-                                RecordStageId = Guid.NewGuid().ToString(),
-                                RecordStageParentId = recordStageId,
-                                ReferenceId = requestFormItemId,
-                                EntityName = typeof(RequestFormItem).Name,
-                                ClientId = EnvClass.Client.ClientId,
-                                IsFile = true,
-                                Filename = attachment,
-                                StatusStage = DxSyncStatusStage.UN_SYNC,
-                                LastSyncAt = DateTime.Now
-                            });
+                            parent.DataCount += 1;
+                            AddFileToStage(syncRecordStages, requestFormItemId, attachment, recordStageId);
                         }
                     }
                 }
             }
-            StageTransactions(dxSyncRecordStages, requestFormIds_);
+            StageTransactions(syncRecordStages, requestFormIds_);
         }
+
 
         private void StageTransactions(IList<DxSyncRecordStage> dxSyncRecordStages, string requestFormIds_)
         {
@@ -149,15 +131,45 @@ namespace DxSyncClient.VesselInventory.Repository
             }
         }
 
-        private void AddRequestFormIdToSyncRecordStage(Hashtable guidRequestFormIds, IList<DxSyncRecordStage> dxSyncRecordStages)
+        private static void AddItemToStage(IList<DxSyncRecordStage> syncRecordStages, string requestFormItemId, string recordStageId, string recordStageParentId)
         {
-            foreach(DictionaryEntry guidRequestFormId in guidRequestFormIds)
+            syncRecordStages.Add(new DxSyncRecordStage
+            {
+                RecordStageId = recordStageId,
+                RecordStageParentId = recordStageParentId,
+                ReferenceId = requestFormItemId,
+                ClientId = EnvClass.Client.ClientId,
+                EntityName = typeof(RequestFormItem).Name,
+                IsFile = false,
+                StatusStage = DxSyncStatusStage.UN_SYNC,
+                LastSyncAt = DateTime.Now
+            });
+        }
+
+        private static void AddFileToStage(IList<DxSyncRecordStage> syncRecordStages, string requestFormItemId, string attachment, string recordStageId)
+        {
+            syncRecordStages.Add(new DxSyncRecordStage
+            {
+                RecordStageId = Guid.NewGuid().ToString(),
+                RecordStageParentId = recordStageId,
+                ReferenceId = requestFormItemId,
+                EntityName = typeof(RequestFormItem).Name,
+                ClientId = EnvClass.Client.ClientId,
+                IsFile = true,
+                Filename = attachment,
+                StatusStage = DxSyncStatusStage.UN_SYNC,
+                LastSyncAt = DateTime.Now
+            });
+        }
+        private void AddRequestFormIdToSyncRecordStage(IEnumerable<int> requestFormIds, IList<DxSyncRecordStage> dxSyncRecordStages)
+        {
+            foreach(var requestFormId in requestFormIds)
             {
                 dxSyncRecordStages.Add(new DxSyncRecordStage
                 {
-                    RecordStageId = guidRequestFormId.Value.ToString(),
+                    RecordStageId = Guid.NewGuid().ToString(),
                     RecordStageParentId = EnvClass.HelperValue.Root,
-                    ReferenceId = guidRequestFormId.Key.ToString(),
+                    ReferenceId = requestFormId.ToString(),
                     ClientId = EnvClass.Client.ClientId,
                     EntityName = typeof(RequestForm).Name,
                     IsFile = false,

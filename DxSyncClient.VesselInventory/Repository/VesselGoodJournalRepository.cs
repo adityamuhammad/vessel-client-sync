@@ -14,7 +14,7 @@ namespace DxSyncClient.VesselInventory.Repository
         public void InitializeData()
         {
 
-            IList<DxSyncRecordStage> dxSyncRecordStages = new List<DxSyncRecordStage>();
+            IList<DxSyncRecordStage> syncRecordStages = new List<DxSyncRecordStage>();
 
             string query = @"SELECT [VesselGoodJournalId]
                              FROM [dbo].[VesselGoodJournal]
@@ -32,15 +32,15 @@ namespace DxSyncClient.VesselInventory.Repository
                 {
                     while (reader.Read())
                     {
-                        AddToRecordStage(dxSyncRecordStages, reader);
+                        AddToRecordStage(syncRecordStages, reader);
                         journalIds.Add(int.Parse(reader["VesselGoodJournalId"].ToString()));
                     }
                 }
             }
-            if(dxSyncRecordStages.Count > 0)
+            if(syncRecordStages.Count > 0)
             {
                 string journalIds_ = string.Join(",", journalIds);
-                StageTransactions(dxSyncRecordStages, journalIds_);
+                StageTransactions(syncRecordStages, journalIds_);
             }
         }
 
