@@ -1,4 +1,4 @@
-using DxSyncClient.ServiceImpl.VesselInventory;
+using DxSyncClient.VesselInventory;
 using System;
 
 namespace DxSyncClient.App.VesselInventory

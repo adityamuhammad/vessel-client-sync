@@ -49,9 +49,9 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DxSyncClient.ServiceImpl.VesselInventory\DxSyncClient.ServiceImpl.VesselInventory.csproj">
+    <ProjectReference Include="..\DxSyncClient.VesselInventory\DxSyncClient.VesselInventory.csproj">
       <Project>{DE9AD44E-CF32-4BA4-BE81-697C0A2C6C1C}</Project>
-      <Name>DxSyncClient.ServiceImpl.VesselInventory</Name>
+      <Name>DxSyncClient.VesselInventory</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
