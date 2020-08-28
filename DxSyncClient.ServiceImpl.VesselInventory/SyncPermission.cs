@@ -15,8 +15,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         private string _username = ConfigurationManager.AppSettings["username"];
         private string _password = ConfigurationManager.AppSettings["password"];
 
-        protected string Token { get; private set; }
-
         private readonly ILogger _logger;
 
         public SyncPermission()

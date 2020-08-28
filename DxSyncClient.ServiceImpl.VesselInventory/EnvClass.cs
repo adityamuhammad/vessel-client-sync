@@ -4,12 +4,15 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
 {
     public class EnvClass
     {
-        public static class Client
+        public class Client
         {
+            //static
             public static int ClientId => int.Parse(ConfigurationManager.AppSettings["ClientId"]);
             public static string ApplicationName => ConfigurationManager.AppSettings["ApplicationName"];
             public static string UploadPath => ConfigurationManager.AppSettings["UploadPath"];
-            public static string Token { get; set; }
+
+            public static string Token = string.Empty;
+
         }
 
         public static class HelperValue
@@ -17,5 +20,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
             public const string Root = "0";
             public const int ChunkSize = 10 * 1024;
         }
+
     }
 }

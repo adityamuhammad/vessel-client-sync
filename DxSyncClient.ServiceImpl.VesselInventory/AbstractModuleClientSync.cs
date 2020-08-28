@@ -19,7 +19,6 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         private readonly ILogger _logger;
         private readonly SyncRecordStageRepository _syncRecordStageRepository;
 
-        private string Token = EnvClass.Client.Token;
 
         public AbstractModuleClientSync()
         {
@@ -330,7 +329,7 @@ namespace DxSyncClient.ServiceImpl.VesselInventory
         /// <param name="syncRecordStage"></param>
         protected void SetQueryParamsAndHeader(RequestAPI requestAPI, DxSyncRecordStage syncRecordStage)
         {
-            requestAPI.AddHeader("X-Token", Token);
+            requestAPI.AddHeader("X-Token", EnvClass.Client.Token);
             requestAPI.AddQueryParam("DomainName", EnvClass.Client.ApplicationName);
             requestAPI.AddQueryParam("ClientId", EnvClass.Client.ClientId.ToString());
             requestAPI.AddQueryParam("EntityName", syncRecordStage.EntityName);
