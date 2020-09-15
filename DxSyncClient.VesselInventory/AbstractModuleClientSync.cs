@@ -21,7 +21,7 @@ namespace DxSyncClient.VesselInventory
 
         public AbstractModuleClientSync()
         {
-            _logger = LoggerFactory.GetLogger("WindowsEventViewer");
+            _logger = LoggerFactory.GetLogger(LoggerFactory.LoggerType.WindowsEventViewer);
             _syncRecordStageRepository = RepositoryFactory.SyncRecordStageRepository;
         }
 

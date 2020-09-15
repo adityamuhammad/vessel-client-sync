@@ -27,7 +27,7 @@ namespace DxSyncClient.VesselInventory.Repository
                              WHERE [VesselGoodReturnId] IN (" + vesselGoodReturnIds_ + ") " +
                             "AND SyncStatus = 'NOT SYNC' AND ISHidden = 0 ";
 
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 IDbCommand command = connection.CreateCommand();
                 command.CommandText = query;
@@ -46,7 +46,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public VesselGoodReturn GetVesselGoodReturn(string vesselGoodReturnId)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query =
                     @"SELECT [VesselGoodReturnId] ,[VesselGoodReturnNumber]
@@ -60,7 +60,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public VesselGoodReturnItem GetVesselGoodReturnItem(string vesselGoodReturnItemId)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query =
                     @"SELECT [VesselGoodReturnItemId] ,[VesselGoodReturnId]
@@ -113,7 +113,7 @@ namespace DxSyncClient.VesselInventory.Repository
         }
         private void UpdateSyncStatusToOnStaging(string vesselGoodReturnIds_)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 connection.Open();
                 string updateGIQuery = @"UPDATE [dbo].[VesselGoodReturn]
@@ -145,7 +145,7 @@ namespace DxSyncClient.VesselInventory.Repository
         }
         private IList<int> GetVesselGoodReturnIds()
         {
-            using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query = @"SELECT [VesselGoodReturnId]
                                 FROM [dbo].[VesselGoodReturn]

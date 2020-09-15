@@ -1,21 +1,32 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 
 namespace DxSyncClient.VesselInventory
 {
     class DbConnectionFactory
     {
+        public enum DBConnectionString
+        {
+            DBVesselInventory,
+            DBSyncClientVesselInventory
+        }
         private static string GetConnectionString(string connectionStringName)
         {
             return ConfigurationManager.ConnectionStrings[connectionStringName].ConnectionString;
         }
-        public static SqlConnection DBVesselInventory()
+        public static IDbConnection GetConnection(DBConnectionString dBConnectionString)
         {
-            return new SqlConnection(GetConnectionString("DBVesselInventory"));
-        }
-        public static SqlConnection DBSyncVesselInventory()
-        {
-            return new SqlConnection(GetConnectionString("DBSyncClientVesselInventory"));
+            switch (dBConnectionString)
+            {
+                case DBConnectionString.DBVesselInventory:
+                    return new SqlConnection(GetConnectionString("DBVesselInventory"));
+                case DBConnectionString.DBSyncClientVesselInventory:
+                    return new SqlConnection(GetConnectionString("DBSyncClientVesselInventory"));
+                default:
+                    throw new ArgumentException();
+            }
         }
     }
 }

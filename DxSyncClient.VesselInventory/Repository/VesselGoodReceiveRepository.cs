@@ -27,7 +27,7 @@ namespace DxSyncClient.VesselInventory.Repository
                              FROM [dbo].[VesselGoodReceiveItemReject]
                              WHERE [VesselGoodReceiveId] IN (" + vesselGoodReceiveIds_ + ") " +
                             "AND SyncStatus = 'NOT SYNC' AND ISHidden = 0 ";
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 IDbCommand command = connection.CreateCommand();
                 command.CommandText = query;
@@ -47,7 +47,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public VesselGoodReceive GetVesselGoodReceive(string vesselGoodReceiveId)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query = 
                     @"SELECT [VesselGoodReceiveId] ,[OfficeGoodIssuedNumber]
@@ -63,7 +63,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public VesselGoodReceiveItemReject GetVesselGoodReceiveItemReject(string vesselGoodReceiveItemRejectId)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query =
                     @"SELECT [VesselGoodReceiveItemRejectId] ,[VesselGoodReceiveId] ,[RequestFormNumber]
@@ -114,7 +114,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         private void UpdateSyncStatusToOnStaging(string vesselGoodReceiveIds_)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 connection.Open();
                 string updateGRQuery = @"UPDATE [dbo].[VesselGoodReceive]
@@ -147,7 +147,7 @@ namespace DxSyncClient.VesselInventory.Repository
         }
         private IEnumerable<int> GetVesselGoodReceiveIds()
         {
-            using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query = @"SELECT [VesselGoodReceiveId]
                                 FROM [dbo].[VesselGoodReceive]

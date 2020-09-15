@@ -19,7 +19,7 @@ namespace DxSyncClient.VesselInventory
 
         public SyncPermission()
         {
-            _logger = LoggerFactory.GetLogger("WindowsEventViewer");
+            _logger = LoggerFactory.GetLogger(LoggerFactory.LoggerType.WindowsEventViewer);
         }
 
         private Credential Credential

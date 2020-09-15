@@ -11,7 +11,10 @@ namespace DxSyncClient.VesselInventory.Repository
 {
     public class RequestFormRepository : SyncRecordStageRepository
     {
-        public RequestFormRepository() { }
+        public RequestFormRepository()
+        {
+            
+        }
 
         public void InitializeData()
         {
@@ -31,7 +34,7 @@ namespace DxSyncClient.VesselInventory.Repository
                            "AND [IsHidden] = 0 " +
                            "AND [SyncStatus] = 'NOT SYNC'";
 
-            using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 IDbCommand command = connection.CreateCommand();
                 command.CommandText = query;
@@ -77,7 +80,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public RequestForm GetRequestForm(string requestFormId)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query = 
                     @"SELECT [RequestFormId] ,[RequestFormNumber] ,[ProjectNumber] ,[DepartmentName]
@@ -91,9 +94,9 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public RequestFormItem GetRequestFormItem(string requestFormItemId)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
-                string query = 
+                string query =
                     @"SELECT [RequestFormItemId] ,[RequestFormId] ,[ItemId] ,[ItemName]
                             ,[ItemGroupId] ,[ItemDimensionNumber] ,[BrandTypeId] ,[BrandTypeName]
                             ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom] ,[Priority] ,[Reason] ,[Remarks]
@@ -106,7 +109,7 @@ namespace DxSyncClient.VesselInventory.Repository
         }
         private void UpdateSyncStatusToOnStaging(string requestFormIds_)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 connection.Open();
                 string updateRF = 
@@ -122,7 +125,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         private IEnumerable<int> GetRequestFormIds()
         {
-            using(IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query = 
                     @"SELECT [RequestFormId] FROM [dbo].[RequestForm]

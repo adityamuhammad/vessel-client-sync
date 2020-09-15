@@ -10,7 +10,7 @@ namespace DxSyncClient.VesselInventory.Repository
     {
         protected void InsertToStaging(IList<DxSyncRecordStage> syncRecordStages)
         {
-            using(IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 connection.Open();
                 string query = 
@@ -30,7 +30,7 @@ namespace DxSyncClient.VesselInventory.Repository
             where THeader: class 
             where TDetail: class
         {
-            using (IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 string query = 
                     @"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
@@ -46,7 +46,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public IEnumerable<DxSyncRecordStage> GetSyncRecordStages<TData>(string statusStage)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 string query = 
                     @"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
@@ -60,7 +60,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public void UpdateSync(string recordStageId, string statusStage)
         {
-            using(IDbConnection connection = DbConnectionFactory.DBSyncVesselInventory())
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 string query = 
                     @"UPDATE [dbo].[SyncOutRecordStage] SET [StatusStage] = @StatusStage 

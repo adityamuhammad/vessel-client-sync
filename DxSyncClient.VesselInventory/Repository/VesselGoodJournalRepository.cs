@@ -22,7 +22,7 @@ namespace DxSyncClient.VesselInventory.Repository
                              AND [IsHidden] = 0 AND [InOut] = 'OUT'";
             IList<int> journalIds = new List<int>();
 
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 IDbCommand command = connection.CreateCommand();
                 command.CommandText = query;
@@ -46,8 +46,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         public VesselGoodJournal GetVesselGoodJournal(string vesselGoodJournalId)
         {
-
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query =
                     @"SELECT [VesselGoodJournalId] ,[DocumentReference] ,[DocumentType] ,[ItemId] ,[ItemGroupId]
@@ -71,7 +70,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
         private void UpdateSyncStatusToOnStaging(string journalIds_)
         {
-            using (IDbConnection connection = DbConnectionFactory.DBVesselInventory())
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 connection.Open();
                 string updateGJQuery = @"UPDATE [dbo].[VesselGoodJournal]
