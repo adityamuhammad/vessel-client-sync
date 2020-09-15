@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using DxSync.Common;
 using DxSync.FxLib;
@@ -74,18 +73,13 @@ namespace DxSyncClient.VesselInventory
         /// Recursively synchronize data from parent to detail
         /// </summary>
         /// <param name="list"></param>
-        /// <param name="parentId"></param>
-        protected void ProcessSyncOut(IEnumerable<DxSyncRecordStage> list,string parentId = "0")
+        protected void ProcessSyncOut(IEnumerable<DxSyncRecordStage> list)
         {
-            var children = list.Where(row => row.RecordStageParentId == parentId).ToList();
 
-            foreach (var row in children)
+            foreach (var row in list)
             {
-                ProcessSyncOut(list, row.RecordStageId);
-
                 if (row.IsFile) SyncFile(row);
                 else SyncData(row);
-
                 SetSyncProcessed(row.RecordStageId);
             }
 
@@ -95,15 +89,11 @@ namespace DxSyncClient.VesselInventory
         /// Recursively confirm the synchronize, from parent to detail
         /// </summary>
         /// <param name="list"></param>
-        /// <param name="parentId"></param>
-        protected void ProcessSyncOutConfirmation(IEnumerable<DxSyncRecordStage> list,string parentId = "0")
+        protected void ProcessSyncOutConfirmation(IEnumerable<DxSyncRecordStage> list)
         {
-            var children = list.Where(row => row.RecordStageParentId == parentId).ToList();
 
-            foreach (var row in children)
+            foreach (var row in list)
             {
-                ProcessSyncOutConfirmation(list, row.RecordStageId);
-
                 if (row.IsFile) ConfirmFile(row);
                 else ConfirmData(row);
             }
@@ -292,6 +282,9 @@ namespace DxSyncClient.VesselInventory
 
                     if(remainFileSize == 0) SetSyncComplete(syncRecordStage.RecordStageId);
                     else SetUnSync(syncRecordStage.RecordStageId);
+                } else if(result.StatusCode == HttpResponseCode.NOT_FOUND)
+                {
+                    SetUnSync(syncRecordStage.RecordStageId);
                 }
             }
         }
