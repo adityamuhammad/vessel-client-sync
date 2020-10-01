@@ -27,13 +27,13 @@ namespace DxSyncClient.VesselInventory.Modules
             SyncOutConfirmation<VesselGoodReturn, VesselGoodReturnItem>();
         }
 
-        protected override object GetReferenceData(DxSyncRecordStage syncRecordStage)
+        protected override object GetReferenceData(DxSyncOutRecordStage syncRecordStage)
         {
             object data = null;
             if (syncRecordStage.EntityName == typeof(VesselGoodReturn).Name)
-                data = _vesselGoodReturnRepository.GetVesselGoodReturn(syncRecordStage.ReferenceId);
+                data = _vesselGoodReturnRepository.GetVesselGoodReturn(syncRecordStage.ReferenceId, syncRecordStage.Version);
             else if (syncRecordStage.EntityName == typeof(VesselGoodReturnItem).Name)
-                data = _vesselGoodReturnRepository.GetVesselGoodReturnItem(syncRecordStage.ReferenceId);
+                data = _vesselGoodReturnRepository.GetVesselGoodReturnItem(syncRecordStage.ReferenceId, syncRecordStage.Version);
             return data;
         }
     }

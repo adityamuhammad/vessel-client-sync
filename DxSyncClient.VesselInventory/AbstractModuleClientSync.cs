@@ -24,28 +24,28 @@ namespace DxSyncClient.VesselInventory
             _syncRecordStageRepository = RepositoryFactory.SyncRecordStageRepository;
         }
 
-        protected abstract object GetReferenceData(DxSyncRecordStage syncRecordStage);
+        protected abstract object GetReferenceData(DxSyncOutRecordStage syncRecordStage);
 
         protected void SetSyncComplete(string recordStageId)
         {
-            _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
+            _syncRecordStageRepository.UpdateSyncOutStaging(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
         }
 
         protected void SetUnSync(string recordStageId)
         {
-            _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.UN_SYNC);
+            _syncRecordStageRepository.UpdateSyncOutStaging(recordStageId, DxSyncStatusStage.UN_SYNC);
         }
 
         protected void SetSyncProcessed(string recordStageId)
         {
-            _syncRecordStageRepository.UpdateSync(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
+            _syncRecordStageRepository.UpdateSyncOutStaging(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
         }
 
         protected void SyncOut<THeader,TDetail>() 
             where THeader : class 
             where TDetail : class
         {
-            var data = _syncRecordStageRepository.GetSyncRecordStages <THeader,TDetail>(DxSyncStatusStage.UN_SYNC);
+            var data = _syncRecordStageRepository.GetSyncOutStaging <THeader,TDetail>(DxSyncStatusStage.UN_SYNC);
             ProcessSyncOut(data);
         }
 
@@ -53,19 +53,19 @@ namespace DxSyncClient.VesselInventory
             where THeader : class 
             where TDetail : class
         {
-            var data = _syncRecordStageRepository.GetSyncRecordStages<THeader, TDetail>(DxSyncStatusStage.SYNC_PROCESSED);
+            var data = _syncRecordStageRepository.GetSyncOutStaging<THeader, TDetail>(DxSyncStatusStage.SYNC_PROCESSED);
             ProcessSyncOutConfirmation(data);
         }
 
         protected void SyncOut<TData>()
         {
-            var data = _syncRecordStageRepository.GetSyncRecordStages<TData>(DxSyncStatusStage.UN_SYNC);
+            var data = _syncRecordStageRepository.GetSyncOutStaging<TData>(DxSyncStatusStage.UN_SYNC);
             ProcessSyncOut(data);
         }
 
         protected void SyncOutConfirmation<TData>()
         {
-            var data = _syncRecordStageRepository.GetSyncRecordStages<TData>(DxSyncStatusStage.SYNC_PROCESSED);
+            var data = _syncRecordStageRepository.GetSyncOutStaging<TData>(DxSyncStatusStage.SYNC_PROCESSED);
             ProcessSyncOutConfirmation(data);
         }
 
@@ -73,7 +73,7 @@ namespace DxSyncClient.VesselInventory
         /// Recursively synchronize data from parent to detail
         /// </summary>
         /// <param name="list"></param>
-        protected void ProcessSyncOut(IEnumerable<DxSyncRecordStage> list)
+        protected void ProcessSyncOut(IEnumerable<DxSyncOutRecordStage> list)
         {
 
             foreach (var row in list)
@@ -89,7 +89,7 @@ namespace DxSyncClient.VesselInventory
         /// Recursively confirm the synchronize, from parent to detail
         /// </summary>
         /// <param name="list"></param>
-        protected void ProcessSyncOutConfirmation(IEnumerable<DxSyncRecordStage> list)
+        protected void ProcessSyncOutConfirmation(IEnumerable<DxSyncOutRecordStage> list)
         {
 
             foreach (var row in list)
@@ -103,7 +103,7 @@ namespace DxSyncClient.VesselInventory
         /// Synchronize data, get record from table in database and send the record to server
         /// </summary>
         /// <param name="row"></param>
-        protected void SyncData(DxSyncRecordStage row)
+        protected void SyncData(DxSyncOutRecordStage row)
         {
             object data = GetReferenceData(row);
             SendData(row, data);
@@ -114,7 +114,7 @@ namespace DxSyncClient.VesselInventory
         /// </summary>
         /// <param name="syncRecordStage"></param>
         /// <param name="data"></param>
-        protected void SendData(DxSyncRecordStage syncRecordStage, object data)
+        protected void SendData(DxSyncOutRecordStage syncRecordStage, object data)
         {
             string endpoint = APISyncEndpoint.SyncOut;
 
@@ -127,7 +127,7 @@ namespace DxSyncClient.VesselInventory
         /// Confirm data
         /// </summary>
         /// <param name="syncRecordStage"></param>
-        protected void ConfirmData(DxSyncRecordStage syncRecordStage)
+        protected void ConfirmData(DxSyncOutRecordStage syncRecordStage)
         {
             string endpoint = APISyncEndpoint.SyncOutConfirmation;
             ResponseData result = PostData(endpoint, syncRecordStage);
@@ -161,7 +161,7 @@ namespace DxSyncClient.VesselInventory
         ///    then Convert the chunk of binary to base64string.
         /// </summary>
         /// <param name="syncRecordStage"></param>
-        protected void SyncFile(DxSyncRecordStage syncRecordStage)
+        protected void SyncFile(DxSyncOutRecordStage syncRecordStage)
         {
             var fileUpload = EnvClass.Client.UploadPath + syncRecordStage.Filename;
             if (File.Exists(fileUpload))
@@ -211,7 +211,7 @@ namespace DxSyncClient.VesselInventory
         /// </summary>
         /// <param name="syncRecordStage"></param>
         /// <returns></returns>
-        protected int CheckFileData(DxSyncRecordStage syncRecordStage)
+        protected int CheckFileData(DxSyncOutRecordStage syncRecordStage)
         {
             string endpoint = APISyncEndpoint.SyncOutFileCheck;
 
@@ -236,7 +236,7 @@ namespace DxSyncClient.VesselInventory
         /// <param name="syncRecordStage"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        protected int SendFileData(DxSyncRecordStage syncRecordStage, object data)
+        protected int SendFileData(DxSyncOutRecordStage syncRecordStage, object data)
         {
             string endpoint = APISyncEndpoint.SyncOutFile;
             var result = PostData(endpoint, syncRecordStage, data);
@@ -258,7 +258,7 @@ namespace DxSyncClient.VesselInventory
         /// Confirm the file, if the file is completed sync (file is match) update the staging to sync complete
         /// </summary>
         /// <param name="syncRecordStage"></param>
-        protected void ConfirmFile(DxSyncRecordStage syncRecordStage)
+        protected void ConfirmFile(DxSyncOutRecordStage syncRecordStage)
         {
             var fileUpload = EnvClass.Client.UploadPath + syncRecordStage.Filename;
             if (File.Exists(fileUpload))
@@ -296,7 +296,7 @@ namespace DxSyncClient.VesselInventory
         /// <param name="syncRecordStage"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        private ResponseData PostData(string endpoint, DxSyncRecordStage syncRecordStage, object data = null)
+        private ResponseData PostData(string endpoint, DxSyncOutRecordStage syncRecordStage, object data = null)
         {
             Task<ResponseData> responseData = Task.Run(async () =>
             {
@@ -314,7 +314,7 @@ namespace DxSyncClient.VesselInventory
         /// </summary>
         /// <param name="requestAPI"></param>
         /// <param name="syncRecordStage"></param>
-        protected void SetQueryParamsAndHeader(RequestAPI requestAPI, DxSyncRecordStage syncRecordStage)
+        protected void SetQueryParamsAndHeader(RequestAPI requestAPI, DxSyncOutRecordStage syncRecordStage)
         {
             requestAPI.AddHeader("X-Token", EnvClass.Client.Token);
             requestAPI.AddQueryParam("DomainName", EnvClass.Client.ApplicationName);
@@ -323,6 +323,7 @@ namespace DxSyncClient.VesselInventory
             requestAPI.AddQueryParam("ReferenceId", syncRecordStage.ReferenceId);
             requestAPI.AddQueryParam("RecordStageId", syncRecordStage.RecordStageId);
             requestAPI.AddQueryParam("RecordStageParentId", syncRecordStage.RecordStageParentId);
+            requestAPI.AddQueryParam("Version", syncRecordStage.Version.ToString());
             requestAPI.AddQueryParam("DataCount", syncRecordStage.DataCount.ToString());
         }
 

@@ -9,23 +9,34 @@ namespace DxSyncClient.App.VesselInventory
         {
             var clientSync = new VesselInventorySyncService();
 
+            Console.Write("Transfering from main to staging... ");
             clientSync.InitializeData();
+            Console.WriteLine("Done");
 
+            Console.Write("Connecting to server... ");
             if (clientSync.Connect())
             {
 
+                Console.WriteLine("Connected");
+                Console.Write("Authenticating... ");
                 clientSync.Authenticate();
+                Console.WriteLine("Authenticated");
 
-                Console.WriteLine("Sync Out Process...");
+                Console.Write("Sync Out Process... ");
                 clientSync.SyncOut();
+                Console.WriteLine("Done");
 
-                Console.WriteLine("Sync Out Confirmation Process...");
+                Console.Write("Sync Out Confirmation Process... ");
                 clientSync.SyncOutConfirmation();
+                Console.WriteLine("Done");
 
                 clientSync.SyncIn();
                 clientSync.SyncInConfirmation();
 
-                Console.WriteLine("Done");
+                Console.WriteLine("Finish");
+            } else
+            {
+                Console.WriteLine("Failed connect to server.");
             }
 
             Console.ReadKey();

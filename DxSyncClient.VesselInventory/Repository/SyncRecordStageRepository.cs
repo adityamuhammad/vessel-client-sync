@@ -8,7 +8,7 @@ namespace DxSyncClient.VesselInventory.Repository
 {
     public class SyncRecordStageRepository
     {
-        protected void InsertToStaging(IList<DxSyncRecordStage> syncRecordStages)
+        protected void CreateSyncOutStaging(IList<DxSyncOutRecordStage> syncRecordStages)
         {
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
@@ -16,49 +16,48 @@ namespace DxSyncClient.VesselInventory.Repository
                 string query = 
                     @"INSERT INTO [dbo].[SyncOutRecordStage]
                         ([RecordStageId] ,[RecordStageParentId] ,[ReferenceId] 
-                        ,[ClientId] ,[StatusStage] ,[EntityName] ,[IsFile]
+                        ,[ClientId] ,[Version] ,[StatusStage] ,[EntityName] ,[IsFile]
                         ,[DataCount], [Filename] ,[LastSyncAt]) 
                       VALUES 
                         (@RecordStageId ,@RecordStageParentId ,@ReferenceId
-                        ,@ClientId ,@StatusStage ,@Entityname ,@IsFile
+                        ,@ClientId ,@Version ,@StatusStage ,@Entityname ,@IsFile
                         ,@DataCount, @Filename,@LastSyncAt)";
                 connection.Execute(query, syncRecordStages);
             }
         }
 
-        public IEnumerable<DxSyncRecordStage> GetSyncRecordStages<THeader, TDetail>(string statusStage) 
+        public IEnumerable<DxSyncOutRecordStage> GetSyncOutStaging<THeader, TDetail>(string statusStage) 
             where THeader: class 
             where TDetail: class
         {
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 string query = 
-                    @"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
+                    $@"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
                             ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount]
                       FROM [dbo].[SyncOutRecordStage]
                       WHERE [EntityName] IN
-                            ('" + typeof(THeader).Name + "','" + 
-                                  typeof(TDetail).Name +  "')" +
-                      "AND [StatusStage] = @StatusStage";
-                return connection.Query<DxSyncRecordStage>(query, new { StatusStage = statusStage}).ToList();
+                            ('{typeof(THeader).Name}','{typeof(TDetail).Name}')
+                      AND [StatusStage] = @StatusStage";
+                return connection.Query<DxSyncOutRecordStage>(query, new { StatusStage = statusStage}).ToList();
             }
         }
 
-        public IEnumerable<DxSyncRecordStage> GetSyncRecordStages<TData>(string statusStage)
+        public IEnumerable<DxSyncOutRecordStage> GetSyncOutStaging<TData>(string statusStage)
         {
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 string query = 
-                    @"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
+                    $@"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
                             ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount]
                       FROM [dbo].[SyncOutRecordStage]
-                      WHERE [EntityName] IN ('" + typeof(TData).Name + "')" +
-                      "AND [StatusStage] = @StatusStage";
-                return connection.Query<DxSyncRecordStage>(query, new { StatusStage = statusStage}).ToList();
+                      WHERE [EntityName] IN ('{typeof(TData).Name}')
+                      AND [StatusStage] = @StatusStage";
+                return connection.Query<DxSyncOutRecordStage>(query, new { StatusStage = statusStage}).ToList();
             }
         }
 
-        public void UpdateSync(string recordStageId, string statusStage)
+        public void UpdateSyncOutStaging(string recordStageId, string statusStage)
         {
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {

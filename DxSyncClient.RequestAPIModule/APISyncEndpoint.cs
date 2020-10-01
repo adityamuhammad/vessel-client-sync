@@ -2,8 +2,8 @@
 {
     public class APISyncEndpoint
     {
-        //private const string Host = "http://localhost:50907";
-        private const string Host = "http://192.168.181.22:8084/";
+        private const string Host = "http://localhost:50907/";
+        //private const string Host = "http://192.168.181.22:8084/";
         public const string CheckConnection = Host + "api/sync/connection_status";
         public const string GetToken = Host + "api/sync/token";
         public const string SyncOut = Host + "api/sync/out";

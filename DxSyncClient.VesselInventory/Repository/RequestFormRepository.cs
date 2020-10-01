@@ -11,30 +11,75 @@ namespace DxSyncClient.VesselInventory.Repository
 {
     public class RequestFormRepository : SyncRecordStageRepository
     {
-        public RequestFormRepository()
-        {
-            
-        }
+        public RequestFormRepository() { }
 
         public void InitializeData()
         {
             var requestFormIds = GetRequestFormIds();
 
-            if (requestFormIds.Count() == 0) return;
+            if (requestFormIds.Count() == 0)
+            {
+                return;
+            }
 
+            IList<DxSyncOutRecordStage> syncOutRecordStages = new List<DxSyncOutRecordStage>();
+
+            AddRequestFormIdToSyncOutStaging(syncOutRecordStages,requestFormIds);
+
+            AddRequestFormItemIdToSyncOutStaging(syncOutRecordStages, requestFormIds);
+
+            MigratingDataTransactions(syncOutRecordStages, requestFormIds);
+        }
+
+        public RequestForm GetRequestForm(string requestFormId, int version)
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                string query = 
+                    @"SELECT [RequestFormId] ,[RequestFormNumber] ,[ProjectNumber] ,[DepartmentName]
+                            ,[TargetDeliveryDate] ,[Status] ,[ShipId] ,[ShipName] ,[Notes] 
+                            ,[CreatedDate] ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] 
+                            ,[SyncStatus] ,[IsHidden] ,[ClientId] ,[Version]
+                      FROM [dbo].[Out_RequestForm] WHERE [RequestFormId] = @RequestFormId AND [Version] = @Version";
+                return connection.Query<RequestForm>(query, 
+                    new {
+                        RequestFormId = requestFormId,
+                        Version = version
+                    }).SingleOrDefault();
+            }
+        }
+
+        public RequestFormItem GetRequestFormItem(string requestFormItemId, int version)
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                string query =
+                    @"SELECT [RequestFormItemId] ,[RequestFormId] ,[ItemId] ,[ItemName]
+                            ,[ItemGroupId] ,[ItemDimensionNumber] ,[BrandTypeId] ,[BrandTypeName]
+                            ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom] ,[Priority] ,[Reason] ,[Remarks]
+                            ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty] ,[LastRequestDate]
+                            ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
+                            ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden], [ClientId] ,[Version]
+                      FROM [dbo].[Out_RequestFormItem] WHERE [RequestFormItemId] = @RequestFormItemId AND [Version] = @Version";
+                return connection.Query<RequestFormItem>(query, 
+                    new {
+                        RequestFormItemId = requestFormItemId,
+                        Version = version
+                    }).SingleOrDefault();
+            }
+        }
+
+        private static void AddRequestFormItemIdToSyncOutStaging(IList<DxSyncOutRecordStage> syncOutRecordStages, IEnumerable<int> requestFormIds)
+        {
             string requestFormIds_ = string.Join(",", requestFormIds);
 
-            IList<DxSyncRecordStage> syncRecordStages = new List<DxSyncRecordStage>();
-
-            AddRequestFormIdToSyncRecordStage(requestFormIds, syncRecordStages);
-
-            string query = @"SELECT [RequestFormItemId] ,[RequestFormId] ,[AttachmentPath]
+            string query = $@"SELECT [RequestFormItemId] ,[RequestFormId] ,[AttachmentPath]
                             FROM [dbo].[RequestFormItem]
-                            WHERE [RequestFormId] IN (" + requestFormIds_ + ") " +
-                           "AND [IsHidden] = 0 " +
-                           "AND [SyncStatus] = 'NOT SYNC'";
+                            WHERE [RequestFormId] IN ({requestFormIds_})
+                            AND [IsHidden] = 0
+                            AND [SyncStatus] = 'NOT SYNC'";
 
-            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 IDbCommand command = connection.CreateCommand();
                 command.CommandText = query;
@@ -47,79 +92,117 @@ namespace DxSyncClient.VesselInventory.Repository
                         var requestFormId = reader["RequestFormId"].ToString();
                         string attachment = reader["AttachmentPath"].ToString();
 
-                        var parent = syncRecordStages.Where(x => x.ReferenceId == requestFormId).SingleOrDefault();
+                        var parent = syncOutRecordStages.Where(x => x.ReferenceId == requestFormId).SingleOrDefault();
 
                         var recordStageId = Guid.NewGuid().ToString();
                         var recordStageParentId = parent.RecordStageId;
 
                         parent.DataCount += 1;
-                        AddItemToStage(syncRecordStages, requestFormItemId, recordStageId, recordStageParentId);
+                        AddItemToStaging(syncOutRecordStages, requestFormItemId, recordStageId, recordStageParentId);
 
                         if (!string.IsNullOrEmpty(attachment))
                         {
                             parent.DataCount += 1;
-                            AddFileToStage(syncRecordStages, requestFormItemId, attachment, recordStageId);
+                            AddFileToStaging(syncOutRecordStages, requestFormItemId, attachment, recordStageId);
                         }
                     }
                 }
             }
-            StageTransactions(syncRecordStages, requestFormIds_);
         }
 
+        private void CopyRequestFormToStaging()
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                connection.Open();
+                var query =
+                    @"INSERT INTO [dbo].[Out_RequestForm]
+                        ([RequestFormId], [ClientId], [Version] ,[RequestFormNumber] ,[ProjectNumber] ,[DepartmentName] 
+                        ,[TargetDeliveryDate] ,[Status] ,[ShipId] ,[ShipName] ,[Notes] ,[CreatedDate] ,[CreatedBy] 
+                        ,[LastModifiedDate] ,[LastModifiedBy] ,[SyncStatus] ,[IsHidden]) 
+                     VALUES 
+                        (@RequestFormId ,@ClientId, @Version ,@RequestFormNumber ,@ProjectNumber ,@DepartmentName
+                        ,@TargetDeliveryDate ,@Status ,@ShipId ,@ShipName ,@Notes ,@CreatedDate ,@CreatedBy
+                        ,@LastModifiedDate ,@LastModifiedBy ,@SyncStatus ,@IsHidden)";
+                connection.Execute(query, GetRequestForms());
+            }
+        }
 
-        private void StageTransactions(IList<DxSyncRecordStage> dxSyncRecordStages, string requestFormIds_)
+        private void CopyRequestFormItemToStaging(IEnumerable<int> requestFormIds)
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                connection.Open();
+                var query =
+                    @"INSERT INTO [dbo].[Out_RequestFormItem]
+                       ([RequestFormItemId] ,[ClientId] ,[Version] ,[RequestFormId] ,[ItemId] ,[ItemName] ,[ItemGroupId] ,[ItemDimensionNumber]
+                       ,[BrandTypeId] ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom]
+                       ,[Priority] ,[Reason] ,[Remarks] ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty]
+                       ,[LastRequestDate] ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
+                       ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden])
+                     VALUES 
+                       (@RequestFormItemId ,@ClientId ,@Version ,@RequestFormId ,@ItemId ,@ItemName ,@ItemGroupId ,@ItemDimensionNumber
+                       ,@BrandTypeId ,@BrandTypeName ,@ColorSizeId ,@ColorSizeName ,@Qty ,@Uom ,@Priority
+                       ,@Reason ,@Remarks ,@AttachmentPath ,@ItemStatus ,@LastRequestQty ,@LastRequestDate
+                       ,@LastSupplyQty ,@LastSupplyDate ,@Rob ,@SyncStatus ,@CreatedDate ,@CreatedBy ,@LastModifiedDate
+                       ,@LastModifiedBy ,@IsHidden)";
+
+                connection.Execute(query, GetRequestFormItems(requestFormIds));
+            }
+        }
+
+        private void MigratingDataTransactions(IList<DxSyncOutRecordStage> syncOutRecordStages, IEnumerable<int> requestFormIds)
         {
             using(TransactionScope scope = new TransactionScope())
             {
-                InsertToStaging(dxSyncRecordStages);
-                UpdateSyncStatusToOnStaging(requestFormIds_);
+                CreateSyncOutStaging(syncOutRecordStages);
+                CopyRequestFormToStaging();
+                CopyRequestFormItemToStaging(requestFormIds);
+                UpdateSyncStatusToOnStaging(requestFormIds);
                 scope.Complete();
             }
         }
 
-
-        public RequestForm GetRequestForm(string requestFormId)
+        private void UpdateSyncStatusToOnStaging(IEnumerable<int> requestFormIds)
         {
-            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
-            {
-                string query = 
-                    @"SELECT [RequestFormId] ,[RequestFormNumber] ,[ProjectNumber] ,[DepartmentName]
-                            ,[TargetDeliveryDate] ,[Status] ,[ShipId] ,[ShipName] ,[Notes] 
-                            ,[CreatedDate] ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] 
-                            ,[SyncStatus] ,[IsHidden]
-                      FROM [dbo].[RequestForm] WHERE [RequestFormId] = @RequestFormId";
-                return connection.Query<RequestForm>(query, new { requestFormId }).SingleOrDefault();
-            }
-        }
-
-        public RequestFormItem GetRequestFormItem(string requestFormItemId)
-        {
-            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
-            {
-                string query =
-                    @"SELECT [RequestFormItemId] ,[RequestFormId] ,[ItemId] ,[ItemName]
-                            ,[ItemGroupId] ,[ItemDimensionNumber] ,[BrandTypeId] ,[BrandTypeName]
-                            ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom] ,[Priority] ,[Reason] ,[Remarks]
-                            ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty] ,[LastRequestDate]
-                            ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
-                            ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden]
-                      FROM [dbo].[RequestFormItem] WHERE [RequestFormItemId] = @RequestFormItemId";
-                return connection.Query<RequestFormItem>(query, new { requestFormItemId }).SingleOrDefault();
-            }
-        }
-        private void UpdateSyncStatusToOnStaging(string requestFormIds_)
-        {
+            string requestFormIds_ = string.Join(",", requestFormIds);
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 connection.Open();
-                string updateRF = 
-                    @"UPDATE [dbo].[RequestForm] SET [SyncStatus] = 'ON STAGING' 
-                      WHERE [RequestFormId] IN (" + requestFormIds_ + ")";
-                string updateRFItem = 
-                    @"UPDATE [dbo].[RequestFormItem] SET [SyncStatus] = 'ON STAGING' 
-                      WHERE [RequestFormId] IN ("+requestFormIds_+")";
+                string updateRF =
+                    $@"UPDATE [dbo].[RequestForm] SET [SyncStatus] = 'ON STAGING' 
+                      WHERE [RequestFormId] IN ({requestFormIds_ })";
+                string updateRFItem =
+                    $@"UPDATE [dbo].[RequestFormItem] SET [SyncStatus] = 'ON STAGING' 
+                      WHERE [RequestFormId] IN ({requestFormIds_})";
                 connection.Execute(updateRF);
                 connection.Execute(updateRFItem);
+            }
+        }
+
+        private IEnumerable<RequestForm> GetRequestForms()
+        {
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+            {
+                string query = 
+                    $@"SELECT *, {EnvClass.Client.ClientId} as ClientId, {1} as Version FROM [dbo].[RequestForm]
+                      WHERE [SyncStatus] = 'NOT SYNC' AND [Status] = 'RELEASE' and [IsHidden] = 0";
+                return connection.Query<RequestForm>(query).ToList();
+            }
+        }
+
+        private IEnumerable<RequestFormItem> GetRequestFormItems(IEnumerable<int> requestFormIds)
+        {
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+            {
+                string requestFormIds_ = string.Join(",", requestFormIds);
+
+                string query = $@"SELECT *, {EnvClass.Client.ClientId} as ClientId, {1} as Version
+                                FROM [dbo].[RequestFormItem]
+                                WHERE [RequestFormId] IN ({requestFormIds_})
+                                AND [IsHidden] = 0
+                                AND [SyncStatus] = 'NOT SYNC'";
+                return connection.Query<RequestFormItem>(query).ToList();
             }
         }
 
@@ -134,9 +217,9 @@ namespace DxSyncClient.VesselInventory.Repository
             }
         }
 
-        private static void AddItemToStage(IList<DxSyncRecordStage> syncRecordStages, string requestFormItemId, string recordStageId, string recordStageParentId)
+        private static void AddItemToStaging(IList<DxSyncOutRecordStage> syncRecordStages, string requestFormItemId, string recordStageId, string recordStageParentId)
         {
-            syncRecordStages.Add(new DxSyncRecordStage
+            syncRecordStages.Add(new DxSyncOutRecordStage
             {
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
@@ -149,9 +232,9 @@ namespace DxSyncClient.VesselInventory.Repository
             });
         }
 
-        private static void AddFileToStage(IList<DxSyncRecordStage> syncRecordStages, string requestFormItemId, string attachment, string recordStageId)
+        private static void AddFileToStaging(IList<DxSyncOutRecordStage> syncRecordStages, string requestFormItemId, string attachment, string recordStageId)
         {
-            syncRecordStages.Add(new DxSyncRecordStage
+            syncRecordStages.Add(new DxSyncOutRecordStage
             {
                 RecordStageId = Guid.NewGuid().ToString(),
                 RecordStageParentId = recordStageId,
@@ -164,11 +247,12 @@ namespace DxSyncClient.VesselInventory.Repository
                 LastSyncAt = DateTime.Now
             });
         }
-        private void AddRequestFormIdToSyncRecordStage(IEnumerable<int> requestFormIds, IList<DxSyncRecordStage> dxSyncRecordStages)
+
+        private void AddRequestFormIdToSyncOutStaging(IList<DxSyncOutRecordStage> dxSyncRecordStages, IEnumerable<int> requestFormIds)
         {
             foreach(var requestFormId in requestFormIds)
             {
-                dxSyncRecordStages.Add(new DxSyncRecordStage
+                dxSyncRecordStages.Add(new DxSyncOutRecordStage
                 {
                     RecordStageId = Guid.NewGuid().ToString(),
                     RecordStageParentId = EnvClass.HelperValue.Root,
@@ -181,6 +265,5 @@ namespace DxSyncClient.VesselInventory.Repository
                 });
             }
         }
-
     }
 }

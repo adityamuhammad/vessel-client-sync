@@ -15,18 +15,30 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             var vesselGoodReceiveIds = GetVesselGoodReceiveIds();
 
-            if (vesselGoodReceiveIds.Count() == 0) return;
+            if (vesselGoodReceiveIds.Count() == 0)
+            {
+                return;
+            }
 
+
+            IList<DxSyncOutRecordStage> syncRecordStages = new List<DxSyncOutRecordStage>();
+
+            AddVesselGoodReceiveIdToSyncRecordStage(syncRecordStages, vesselGoodReceiveIds);
+
+            AddVesselGoodReceiveItemRejectIdToSyncRecordStage(syncRecordStages, vesselGoodReceiveIds);
+
+            MigratingDataTransactions(syncRecordStages, vesselGoodReceiveIds);
+
+        }
+
+        private static void AddVesselGoodReceiveItemRejectIdToSyncRecordStage(IList<DxSyncOutRecordStage> syncRecordStages, IEnumerable<int> vesselGoodReceiveIds)
+        {
             string vesselGoodReceiveIds_ = string.Join(",", vesselGoodReceiveIds);
 
-            IList<DxSyncRecordStage> syncRecordStages = new List<DxSyncRecordStage>();
-
-            AddVesselGoodReceiveIdToSyncRecordStage(vesselGoodReceiveIds, syncRecordStages);
-
-            string query = @"SELECT [VesselGoodReceiveItemRejectId], [VesselGoodReceiveId] 
+            string query = $@"SELECT [VesselGoodReceiveItemRejectId], [VesselGoodReceiveId] 
                              FROM [dbo].[VesselGoodReceiveItemReject]
-                             WHERE [VesselGoodReceiveId] IN (" + vesselGoodReceiveIds_ + ") " +
-                            "AND SyncStatus = 'NOT SYNC' AND ISHidden = 0 ";
+                             WHERE [VesselGoodReceiveId] IN ({vesselGoodReceiveIds_})
+                             AND SyncStatus = 'NOT SYNC' AND ISHidden = 0 ";
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 IDbCommand command = connection.CreateCommand();
@@ -41,13 +53,11 @@ namespace DxSyncClient.VesselInventory.Repository
                     }
                 }
             }
-            StageTransactions(syncRecordStages, vesselGoodReceiveIds_);
-
         }
 
-        public VesselGoodReceive GetVesselGoodReceive(string vesselGoodReceiveId)
+        public VesselGoodReceive GetVesselGoodReceive(string vesselGoodReceiveId, int version)
         {
-            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 string query = 
                     @"SELECT [VesselGoodReceiveId] ,[OfficeGoodIssuedNumber]
@@ -55,29 +65,39 @@ namespace DxSyncClient.VesselInventory.Repository
                               ,[ShipId] ,[ShipName] ,[BargeId] ,[BargeName]
                               ,[SyncStatus] ,[CreatedDate] ,[CreatedBy]
                               ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden]
-                      FROM [dbo].[VesselGoodReceive]
-                      WHERE [VesselGoodReceiveId] = @VesselGoodReceiveId";
-                return connection.Query<VesselGoodReceive>(query, new { vesselGoodReceiveId }).SingleOrDefault();
+                              ,[ClientId] ,[Version]
+                      FROM [dbo].[Out_VesselGoodReceive]
+                      WHERE [VesselGoodReceiveId] = @VesselGoodReceiveId AND [Version] = @Version";
+                return connection.Query<VesselGoodReceive>(query, 
+                    new {
+                        VesselGoodReceiveId = vesselGoodReceiveId,
+                        Version = version
+                    }).SingleOrDefault();
             }
         }
 
-        public VesselGoodReceiveItemReject GetVesselGoodReceiveItemReject(string vesselGoodReceiveItemRejectId)
+        public VesselGoodReceiveItemReject GetVesselGoodReceiveItemReject(string vesselGoodReceiveItemRejectId, int version)
         {
-            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 string query =
                     @"SELECT [VesselGoodReceiveItemRejectId] ,[VesselGoodReceiveId] ,[RequestFormNumber]
                           ,[ItemId] ,[ItemGroupId] ,[ItemName] ,[ItemDimensionNumber] ,[BrandTypeId]
                           ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName] ,[Uom] ,[Qty] ,[CreatedDate]
                           ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[SyncStatus] ,[IsHidden]
-                      FROM [dbo].[VesselGoodReceiveItemReject]
-                      WHERE [VesselGoodReceiveItemRejectId] = @VesselGoodReceiveItemRejectId";
-                return connection.Query<VesselGoodReceiveItemReject>(query, new { vesselGoodReceiveItemRejectId }).SingleOrDefault();
+                          ,[ClientId] ,[Version]
+                      FROM [dbo].[Out_VesselGoodReceiveItemReject]
+                      WHERE [VesselGoodReceiveItemRejectId] = @VesselGoodReceiveItemRejectId AND [Version] = @Version";
+                return connection.Query<VesselGoodReceiveItemReject>(query, 
+                    new {
+                        VesselGoodReceiveItemRejectId = vesselGoodReceiveItemRejectId,
+                        Version = version
+                    }).SingleOrDefault();
             }
 
         }
 
-        private static void AddToRecordStage(IList<DxSyncRecordStage> syncRecordStages, IDataReader reader)
+        private static void AddToRecordStage(IList<DxSyncOutRecordStage> syncRecordStages, IDataReader reader)
         {
             var vesselGoodReceiveItemRejectId = reader["VesselGoodReceiveItemRejectId"].ToString();
             var vesselGoodReceiveId = reader["VesselGoodReceiveId"].ToString();
@@ -89,7 +109,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
             parent.DataCount += 1;
 
-            syncRecordStages.Add(new DxSyncRecordStage
+            syncRecordStages.Add(new DxSyncOutRecordStage
             {
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
@@ -102,37 +122,40 @@ namespace DxSyncClient.VesselInventory.Repository
             });
         }
 
-        private void StageTransactions(IList<DxSyncRecordStage> dxSyncRecordStages, string vesselGoodReceiveIds_)
+        private void MigratingDataTransactions(IList<DxSyncOutRecordStage> dxSyncRecordStages, IEnumerable<int> vesselGoodReceiveIds)
         {
             using(TransactionScope scope = new TransactionScope())
             {
-                InsertToStaging(dxSyncRecordStages);
-                UpdateSyncStatusToOnStaging(vesselGoodReceiveIds_);
+                CreateSyncOutStaging(dxSyncRecordStages);
+                CopyVesselGoodReceiveToStaging();
+                CopyVesselGoodReceiveItemRejectToStaging(vesselGoodReceiveIds);
+                UpdateSyncStatusToOnStaging(vesselGoodReceiveIds);
                 scope.Complete();
             }
         }
 
-        private void UpdateSyncStatusToOnStaging(string vesselGoodReceiveIds_)
+        private void UpdateSyncStatusToOnStaging(IEnumerable<int> vesselGoodReceiveIds)
         {
+            string vesselGoodReceiveIds_ = string.Join(",", vesselGoodReceiveIds);
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 connection.Open();
-                string updateGRQuery = @"UPDATE [dbo].[VesselGoodReceive]
+                string updateGRQuery = $@"UPDATE [dbo].[VesselGoodReceive]
                                         SET [SyncStatus] = 'ON STAGING' 
-                                        WHERE [VesselGoodReceiveId] IN (" + vesselGoodReceiveIds_ + ")";
-                string updateGRItemQuery = @"UPDATE [dbo].[VesselGoodReceiveItemReject] 
+                                        WHERE [VesselGoodReceiveId] IN ({vesselGoodReceiveIds_ })";
+                string updateGRItemQuery = $@"UPDATE [dbo].[VesselGoodReceiveItemReject] 
                                             SET [SyncStatus] = 'ON STAGING' 
-                                            WHERE [VesselGoodReceiveId] IN ("+vesselGoodReceiveIds_+")";
+                                            WHERE [VesselGoodReceiveId] IN ({vesselGoodReceiveIds_})";
                 connection.Execute(updateGRQuery);
                 connection.Execute(updateGRItemQuery);
             }
         }
 
-        private void AddVesselGoodReceiveIdToSyncRecordStage(IEnumerable<int> vesselGoodReceiveIds, IList<DxSyncRecordStage> dxSyncRecordStages)
+        private void AddVesselGoodReceiveIdToSyncRecordStage(IList<DxSyncOutRecordStage> dxSyncRecordStages, IEnumerable<int> vesselGoodReceiveIds )
         {
             foreach(var vesselGoodReceiveId in vesselGoodReceiveIds)
             {
-                dxSyncRecordStages.Add(new DxSyncRecordStage
+                dxSyncRecordStages.Add(new DxSyncOutRecordStage
                 {
                     RecordStageId = Guid.NewGuid().ToString(),
                     RecordStageParentId = EnvClass.HelperValue.Root,
@@ -145,6 +168,73 @@ namespace DxSyncClient.VesselInventory.Repository
                 });
             }
         }
+        private void CopyVesselGoodReceiveToStaging()
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                connection.Open();
+                var query =
+                    @"INSERT INTO [dbo].[Out_VesselGoodReceive]
+                       ([VesselGoodReceiveId] ,[ClientId] ,[Version] ,[OfficeGoodIssuedNumber] ,[VesselGoodReceiveNumber]
+                       ,[VesselGoodReceiveDate] ,[ShipId] ,[ShipName]
+                       ,[BargeId] ,[BargeName] ,[SyncStatus] ,[CreatedDate]
+                       ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden])
+                     VALUES
+                       (@VesselGoodReceiveId ,@ClientId ,@Version ,@OfficeGoodIssuedNumber, @VesselGoodReceiveNumber,
+                        @VesselGoodReceiveDate, @ShipId, @ShipName, 
+                        @BargeId, @BargeName, @SyncStatus, @CreatedDate, 
+                        @CreatedBy, @LastModifiedDate ,@LastModifiedBy,@IsHidden)";
+
+                connection.Execute(query, GetVesselGoodReceives());
+            }
+        }
+        private void CopyVesselGoodReceiveItemRejectToStaging(IEnumerable<int> vesselGoodReceiveIds)
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                connection.Open();
+                var query =
+                        @"INSERT INTO [dbo].[Out_VesselGoodReceiveItemReject]
+                           ([VesselGoodReceiveItemRejectId] ,[ClientId] ,[Version] ,[VesselGoodReceiveId] ,[RequestFormNumber] ,[ItemId] 
+                           ,[ItemGroupId] ,[ItemName] ,[ItemDimensionNumber]
+                           ,[BrandTypeId] ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName]
+                           ,[Uom] ,[Qty] ,[CreatedDate] ,[CreatedBy] ,[LastModifiedDate]
+                           ,[LastModifiedBy] ,[SyncStatus] ,[IsHidden]) 
+                        VALUES
+                           (@VesselGoodReceiveItemRejectId ,@ClientId ,@Version ,@VesselGoodReceiveId ,@RequestFormNumber ,@ItemId
+                           ,@ItemGroupId ,@ItemName ,@ItemDimensionNumber 
+                           ,@BrandTypeId ,@BrandTypeName ,@ColorSizeId ,@ColorSizeName 
+                           ,@Uom ,@Qty ,@CreatedDate ,@CreatedBy ,@LastModifiedDate
+                           ,@LastModifiedBy ,@SyncStatus ,@IsHidden)";
+                connection.Execute(query, GetVesselGoodReceiveItemRejects(vesselGoodReceiveIds));
+            }
+        }
+
+        private IEnumerable<VesselGoodReceiveItemReject> GetVesselGoodReceiveItemRejects(IEnumerable<int> vesselGoodReceiveIds)
+        {
+            string vesselGoodReceiveIds_ = string.Join(",", vesselGoodReceiveIds);
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+            {
+                string query = $@"SELECT *, {EnvClass.Client.ClientId} AS ClientId, {1} AS Version
+                             FROM [dbo].[VesselGoodReceiveItemReject]
+                             WHERE [VesselGoodReceiveId] IN ({vesselGoodReceiveIds_})
+                             AND SyncStatus = 'NOT SYNC' AND ISHidden = 0 ";
+                return connection.Query<VesselGoodReceiveItemReject>(query).ToList();
+            }
+
+        }
+        private IEnumerable<VesselGoodReceive> GetVesselGoodReceives()
+        {
+            using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+            {
+                string query = @"SELECT *
+                                FROM [dbo].[VesselGoodReceive]
+                                WHERE  [CreatedDate] < DATEADD(HOUR, -1, GETDATE())
+                                AND [IsHidden] = 0 AND SyncStatus = 'NOT SYNC'";
+                return connection.Query<VesselGoodReceive>(query).ToList();
+            }
+        }
+
         private IEnumerable<int> GetVesselGoodReceiveIds()
         {
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))

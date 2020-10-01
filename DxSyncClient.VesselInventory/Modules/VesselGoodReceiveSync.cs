@@ -25,13 +25,13 @@ namespace DxSyncClient.VesselInventory.Modules
             SyncOutConfirmation<VesselGoodReceive, VesselGoodReceiveItemReject>();
         }
 
-        protected override object GetReferenceData(DxSyncRecordStage recordStage)
+        protected override object GetReferenceData(DxSyncOutRecordStage recordStage)
         {
             object data = null;
             if (recordStage.EntityName == typeof(VesselGoodReceive).Name)
-                data = _vesselGoodReceiveRepository.GetVesselGoodReceive(recordStage.ReferenceId);
+                data = _vesselGoodReceiveRepository.GetVesselGoodReceive(recordStage.ReferenceId, recordStage.Version);
             else if (recordStage.EntityName == typeof(VesselGoodReceiveItemReject).Name)
-                data = _vesselGoodReceiveRepository.GetVesselGoodReceiveItemReject(recordStage.ReferenceId);
+                data = _vesselGoodReceiveRepository.GetVesselGoodReceiveItemReject(recordStage.ReferenceId, recordStage.Version);
             return data;
         }
 
