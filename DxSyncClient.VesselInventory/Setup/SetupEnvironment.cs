@@ -2,7 +2,7 @@
 
 namespace DxSyncClient.VesselInventory
 {
-    public class EnvClass
+    public class SetupEnvironment
     {
         public class Client
         {

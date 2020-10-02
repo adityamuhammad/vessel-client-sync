@@ -19,13 +19,13 @@ namespace DxSyncClient.VesselInventory
             _vesselGoodJournalSync = ModuleFactory.VesselGoodJournalSync;
         }
 
-        public void InitializeData()
+        public void TransferFromMainToStaging()
         {
-            _requestFormSync.InitializeData();
-            _vesselGoodReceiveSync.InitializeData();
-            _vesselGoodIssuedSync.InitializeData();
-            _vesselGoodReturnSync.InitializeData();
-            _vesselGoodJournalSync.InitializeData();
+            _requestFormSync.TransferFromMainToStaging();
+            _vesselGoodReceiveSync.TransferFromMainToStaging();
+            _vesselGoodIssuedSync.TransferFromMainToStaging();
+            _vesselGoodReturnSync.TransferFromMainToStaging();
+            _vesselGoodJournalSync.TransferFromMainToStaging();
         }
 
         public void SyncOut()

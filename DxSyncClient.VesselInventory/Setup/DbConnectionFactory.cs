@@ -3,7 +3,7 @@ using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 
-namespace DxSyncClient.VesselInventory
+namespace DxSyncClient.VesselInventory.Setup
 {
     class DbConnectionFactory
     {

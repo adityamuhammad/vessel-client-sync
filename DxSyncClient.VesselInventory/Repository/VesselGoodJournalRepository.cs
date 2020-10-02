@@ -6,12 +6,13 @@ using System.Transactions;
 using Dapper;
 using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
+using DxSyncClient.VesselInventory.Setup;
 
 namespace DxSyncClient.VesselInventory.Repository
 {
     public class VesselGoodJournalRepository : SyncRecordStageRepository
     {
-        public void InitializeData()
+        public void TransferFromMainToStaging()
         {
 
             IList<DxSyncOutRecordStage> syncRecordStages = new List<DxSyncOutRecordStage>();
@@ -146,7 +147,7 @@ namespace DxSyncClient.VesselInventory.Repository
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string journalIds_ = string.Join(",", vesselGoodJournalIds);
-                string query = $@"SELECT *, {EnvClass.Client.ClientId} AS ClientId, {1} AS Version
+                string query = $@"SELECT *, {SetupEnvironment.Client.ClientId} AS ClientId, {1} AS Version
                                  FROM [dbo].[VesselGoodJournal] 
                                  WHERE [VesselGoodJournalId] IN ({journalIds_})";
                 return connection.Query<VesselGoodJournal>(query).ToList();
@@ -172,14 +173,14 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             var vesselGoodJournalId = reader["VesselGoodJournalId"].ToString();
             var recordStageId = Guid.NewGuid().ToString();
-            var recordStageParentId = EnvClass.HelperValue.Root;
+            var recordStageParentId = SetupEnvironment.HelperValue.Root;
 
             dxSyncRecordStages.Add(new DxSyncOutRecordStage
             {
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
                 ReferenceId = vesselGoodJournalId,
-                ClientId = EnvClass.Client.ClientId,
+                ClientId = SetupEnvironment.Client.ClientId,
                 EntityName = typeof(VesselGoodJournal).Name,
                 IsFile = false,
                 StatusStage = DxSyncStatusStage.UN_SYNC,

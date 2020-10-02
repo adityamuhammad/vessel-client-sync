@@ -10,7 +10,7 @@ namespace DxSyncClient.App.VesselInventory
             var clientSync = new VesselInventorySyncService();
 
             Console.Write("Transfering from main to staging... ");
-            clientSync.InitializeData();
+            clientSync.TransferFromMainToStaging();
             Console.WriteLine("Done");
 
             Console.Write("Connecting to server... ");

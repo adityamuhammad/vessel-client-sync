@@ -6,12 +6,13 @@ using System.Transactions;
 using Dapper;
 using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
+using DxSyncClient.VesselInventory.Setup;
 
 namespace DxSyncClient.VesselInventory.Repository
 {
     public class VesselGoodReturnRepository : SyncRecordStageRepository
     {
-        public void InitializeData()
+        public void TransferFromMainToStaging()
         {
             var vesselGoodReturnIds = GetVesselGoodReturnIds();
             if (vesselGoodReturnIds.Count() == 0)
@@ -118,7 +119,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
                 ReferenceId = vesselGoodReturnItemId,
-                ClientId = EnvClass.Client.ClientId,
+                ClientId = SetupEnvironment.Client.ClientId,
                 EntityName = typeof(VesselGoodReturnItem).Name,
                 IsFile = false,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
@@ -160,9 +161,9 @@ namespace DxSyncClient.VesselInventory.Repository
                 syncOutRecordStages.Add(new DxSyncOutRecordStage
                 {
                     RecordStageId = Guid.NewGuid().ToString(),
-                    RecordStageParentId = EnvClass.HelperValue.Root,
+                    RecordStageParentId = SetupEnvironment.HelperValue.Root,
                     ReferenceId = vesselGoodReturnId.ToString(),
-                    ClientId = EnvClass.Client.ClientId,
+                    ClientId = SetupEnvironment.Client.ClientId,
                     EntityName = typeof(VesselGoodReturn).Name,
                     IsFile = false,
                     LastSyncAt = DateTime.Now,
@@ -230,7 +231,7 @@ namespace DxSyncClient.VesselInventory.Repository
             {
                 string vesselGoodReturnIds_ = string.Join(",", vesselGoodReturnIds);
 
-                string query = $@"SELECT *, {EnvClass.Client.ClientId} AS ClientId, {1} AS Version
+                string query = $@"SELECT *, {SetupEnvironment.Client.ClientId} AS ClientId, {1} AS Version
                                  FROM [dbo].[VesselGoodReturnItem]
                                  WHERE [VesselGoodReturnId] IN ({vesselGoodReturnIds_ })
                                  AND SyncStatus = 'NOT SYNC' AND ISHidden = 0 ";

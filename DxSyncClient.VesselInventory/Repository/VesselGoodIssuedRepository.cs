@@ -6,12 +6,13 @@ using System.Transactions;
 using Dapper;
 using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
+using DxSyncClient.VesselInventory.Setup;
 
 namespace DxSyncClient.VesselInventory.Repository
 {
     public class VesselGoodIssuedRepository : SyncRecordStageRepository
     {
-        public void InitializeData()
+        public void TransferFromMainToStaging()
         {
             var vesselGoodIssuedIds = GetVesselGoodIssuedIds();
             if (vesselGoodIssuedIds.Count() == 0)
@@ -179,7 +180,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
                 ReferenceId = vesselGoodIssuedItemId,
-                ClientId = EnvClass.Client.ClientId,
+                ClientId = SetupEnvironment.Client.ClientId,
                 EntityName = typeof(VesselGoodIssuedItem).Name,
                 IsFile = false,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
@@ -194,9 +195,9 @@ namespace DxSyncClient.VesselInventory.Repository
                 dxSyncRecordStages.Add(new DxSyncOutRecordStage
                 {
                     RecordStageId = Guid.NewGuid().ToString(),
-                    RecordStageParentId = EnvClass.HelperValue.Root,
+                    RecordStageParentId = SetupEnvironment.HelperValue.Root,
                     ReferenceId = vesselGoodIssuedId.ToString(),
-                    ClientId = EnvClass.Client.ClientId,
+                    ClientId = SetupEnvironment.Client.ClientId,
                     EntityName = typeof(VesselGoodIssued).Name,
                     IsFile = false,
                     LastSyncAt = DateTime.Now,
@@ -209,7 +210,7 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
-                string query = $@"SELECT *, {EnvClass.Client.ClientId} AS ClientId, {1} AS Version
+                string query = $@"SELECT *, {SetupEnvironment.Client.ClientId} AS ClientId, {1} AS Version
                                 FROM [dbo].[VesselGoodIssued]
                                 WHERE  [CreatedDate] < DATEADD(HOUR, -1, GETDATE())
                                 AND [IsHidden] = 0 AND SyncStatus = 'NOT SYNC'";
@@ -223,7 +224,7 @@ namespace DxSyncClient.VesselInventory.Repository
             {
                 string vesselGoodIssuedIds_ = string.Join(",", vesselGoodIssuedIds);
 
-                string query = $@"SELECT *, {EnvClass.Client.ClientId} AS ClientId, {1} AS Version
+                string query = $@"SELECT *, {SetupEnvironment.Client.ClientId} AS ClientId, {1} AS Version
                                  FROM [dbo].[VesselGoodIssuedItem]
                                  WHERE [VesselGoodIssuedId] IN ({vesselGoodIssuedIds_ })
                                  AND SyncStatus = 'NOT SYNC' AND ISHidden = 0 ";

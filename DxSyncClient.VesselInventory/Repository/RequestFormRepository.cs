@@ -6,6 +6,7 @@ using System.Transactions;
 using Dapper;
 using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
+using DxSyncClient.VesselInventory.Setup;
 
 namespace DxSyncClient.VesselInventory.Repository
 {
@@ -13,7 +14,7 @@ namespace DxSyncClient.VesselInventory.Repository
     {
         public RequestFormRepository() { }
 
-        public void InitializeData()
+        public void TransferFromMainToStaging()
         {
             var requestFormIds = GetRequestFormIds();
 
@@ -185,7 +186,7 @@ namespace DxSyncClient.VesselInventory.Repository
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
                 string query = 
-                    $@"SELECT *, {EnvClass.Client.ClientId} as ClientId, {1} as Version FROM [dbo].[RequestForm]
+                    $@"SELECT *, {SetupEnvironment.Client.ClientId} as ClientId, {1} as Version FROM [dbo].[RequestForm]
                       WHERE [SyncStatus] = 'NOT SYNC' AND [Status] = 'RELEASE' and [IsHidden] = 0";
                 return connection.Query<RequestForm>(query).ToList();
             }
@@ -197,7 +198,7 @@ namespace DxSyncClient.VesselInventory.Repository
             {
                 string requestFormIds_ = string.Join(",", requestFormIds);
 
-                string query = $@"SELECT *, {EnvClass.Client.ClientId} as ClientId, {1} as Version
+                string query = $@"SELECT *, {SetupEnvironment.Client.ClientId} as ClientId, {1} as Version
                                 FROM [dbo].[RequestFormItem]
                                 WHERE [RequestFormId] IN ({requestFormIds_})
                                 AND [IsHidden] = 0
@@ -224,7 +225,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
                 ReferenceId = requestFormItemId,
-                ClientId = EnvClass.Client.ClientId,
+                ClientId = SetupEnvironment.Client.ClientId,
                 EntityName = typeof(RequestFormItem).Name,
                 IsFile = false,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
@@ -240,7 +241,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 RecordStageParentId = recordStageId,
                 ReferenceId = requestFormItemId,
                 EntityName = typeof(RequestFormItem).Name,
-                ClientId = EnvClass.Client.ClientId,
+                ClientId = SetupEnvironment.Client.ClientId,
                 IsFile = true,
                 Filename = attachment,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
@@ -255,9 +256,9 @@ namespace DxSyncClient.VesselInventory.Repository
                 dxSyncRecordStages.Add(new DxSyncOutRecordStage
                 {
                     RecordStageId = Guid.NewGuid().ToString(),
-                    RecordStageParentId = EnvClass.HelperValue.Root,
+                    RecordStageParentId = SetupEnvironment.HelperValue.Root,
                     ReferenceId = requestFormId.ToString(),
-                    ClientId = EnvClass.Client.ClientId,
+                    ClientId = SetupEnvironment.Client.ClientId,
                     EntityName = typeof(RequestForm).Name,
                     IsFile = false,
                     LastSyncAt = DateTime.Now,

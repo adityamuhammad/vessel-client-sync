@@ -66,10 +66,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AbstractModuleClientSync.cs" />
-    <Compile Include="DbConnectionFactory.cs" />
-    <Compile Include="EnvClass.cs" />
+    <Compile Include="Abstractions\AbstractBaseSynchronization.cs" />
+    <Compile Include="Setup\DbConnectionFactory.cs" />
+    <Compile Include="Setup\SetupEnvironment.cs" />
     <Compile Include="GlobalSuppressions.cs" />
+    <Compile Include="Interfaces\ISyncRecordStageRepository.cs" />
     <Compile Include="Modules\VesselGoodIssuedSync.cs" />
     <Compile Include="Modules\VesselGoodJournalSync.cs" />
     <Compile Include="Modules\VesselGoodReceiveSync.cs" />
@@ -83,7 +84,7 @@
     <Compile Include="Repository\VesselGoodJournalRepository.cs" />
     <Compile Include="Repository\VesselGoodReceiveRepository.cs" />
     <Compile Include="Repository\VesselGoodReturnRepository.cs" />
-    <Compile Include="SyncPermission.cs" />
+    <Compile Include="Setup\SyncPermission.cs" />
     <Compile Include="VesselInventorySyncService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

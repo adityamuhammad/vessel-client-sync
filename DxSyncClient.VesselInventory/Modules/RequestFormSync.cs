@@ -1,31 +1,32 @@
 ﻿using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
+using DxSyncClient.VesselInventory.Abstractions;
 using DxSyncClient.VesselInventory.Repository;
 
 namespace DxSyncClient.VesselInventory.Modules
 {
-    public class RequestFormSync : AbstractModuleClientSync
+    public class RequestFormSync : AbstractBaseSynchronization
     {
         private readonly RequestFormRepository _requestFormRepository;
-        public RequestFormSync()
+        public RequestFormSync() : base(new SyncRecordStageRepository())
         {
             _requestFormRepository = RepositoryFactory.RequestFormRepository;
         }
 
-        public void InitializeData()
+        public void TransferFromMainToStaging()
         {
-             _requestFormRepository.InitializeData();
+             _requestFormRepository.TransferFromMainToStaging();
         }
 
         public void SyncOut()
         {
-            var data = _requestFormRepository.GetSyncOutStaging
+            var data = _requestFormRepository.GetStagingSyncOut
                 <RequestForm,RequestFormItem>(DxSyncStatusStage.UN_SYNC);
             ProcessSyncOut(data);
         }
         public void SyncOutConfirmation()
         {
-            var data = _requestFormRepository.GetSyncOutStaging
+            var data = _requestFormRepository.GetStagingSyncOut
                 <RequestForm,RequestFormItem>(DxSyncStatusStage.SYNC_PROCESSED);
             ProcessSyncOutConfirmation(data);
         }

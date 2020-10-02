@@ -67,7 +67,7 @@ namespace DxSyncClient.VesselInventory
 
         private void SetToken(string token)
         {
-            EnvClass.Client.Token = token;
+            SetupEnvironment.Client.Token = token;
         }
 
         private void WriteLog(string endpoint, ResponseData responseData, Credential credential)

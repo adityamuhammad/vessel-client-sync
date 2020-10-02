@@ -6,46 +6,46 @@ using System.Threading.Tasks;
 using DxSync.Common;
 using DxSync.FxLib;
 using DxSync.Log;
+using DxSyncClient.Contract.Interfaces;
 using DxSyncClient.RequestAPIModule;
-using DxSyncClient.VesselInventory.Repository;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace DxSyncClient.VesselInventory
+namespace DxSyncClient.VesselInventory.Abstractions
 {
-    public abstract class AbstractModuleClientSync
+    public abstract class AbstractBaseSynchronization
     {
         private readonly ILogger _logger;
-        private readonly SyncRecordStageRepository _syncRecordStageRepository;
+        private readonly ISyncRecordStageRepository _syncRecordStageRepository;
 
-        public AbstractModuleClientSync()
+        public AbstractBaseSynchronization(ISyncRecordStageRepository syncRecordStageRepository)
         {
             _logger = LoggerFactory.GetLogger(LoggerFactory.LoggerType.WindowsEventViewer);
-            _syncRecordStageRepository = RepositoryFactory.SyncRecordStageRepository;
+            _syncRecordStageRepository = syncRecordStageRepository;
         }
 
         protected abstract object GetReferenceData(DxSyncOutRecordStage syncRecordStage);
 
-        protected void SetSyncComplete(string recordStageId)
+        protected void SetCompleteSyncOut(string recordStageId)
         {
-            _syncRecordStageRepository.UpdateSyncOutStaging(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
+            _syncRecordStageRepository.UpdateStagingSyncOut(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
         }
 
-        protected void SetUnSync(string recordStageId)
+        protected void SetUnSyncSyncOut(string recordStageId)
         {
-            _syncRecordStageRepository.UpdateSyncOutStaging(recordStageId, DxSyncStatusStage.UN_SYNC);
+            _syncRecordStageRepository.UpdateStagingSyncOut(recordStageId, DxSyncStatusStage.UN_SYNC);
         }
 
-        protected void SetSyncProcessed(string recordStageId)
+        protected void SetProcessedSyncOut(string recordStageId)
         {
-            _syncRecordStageRepository.UpdateSyncOutStaging(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
+            _syncRecordStageRepository.UpdateStagingSyncOut(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
         }
 
         protected void SyncOut<THeader,TDetail>() 
             where THeader : class 
             where TDetail : class
         {
-            var data = _syncRecordStageRepository.GetSyncOutStaging <THeader,TDetail>(DxSyncStatusStage.UN_SYNC);
+            var data = _syncRecordStageRepository.GetStagingSyncOut <THeader,TDetail>(DxSyncStatusStage.UN_SYNC);
             ProcessSyncOut(data);
         }
 
@@ -53,19 +53,19 @@ namespace DxSyncClient.VesselInventory
             where THeader : class 
             where TDetail : class
         {
-            var data = _syncRecordStageRepository.GetSyncOutStaging<THeader, TDetail>(DxSyncStatusStage.SYNC_PROCESSED);
+            var data = _syncRecordStageRepository.GetStagingSyncOut<THeader, TDetail>(DxSyncStatusStage.SYNC_PROCESSED);
             ProcessSyncOutConfirmation(data);
         }
 
         protected void SyncOut<TData>()
         {
-            var data = _syncRecordStageRepository.GetSyncOutStaging<TData>(DxSyncStatusStage.UN_SYNC);
+            var data = _syncRecordStageRepository.GetStagingSyncOut<TData>(DxSyncStatusStage.UN_SYNC);
             ProcessSyncOut(data);
         }
 
         protected void SyncOutConfirmation<TData>()
         {
-            var data = _syncRecordStageRepository.GetSyncOutStaging<TData>(DxSyncStatusStage.SYNC_PROCESSED);
+            var data = _syncRecordStageRepository.GetStagingSyncOut<TData>(DxSyncStatusStage.SYNC_PROCESSED);
             ProcessSyncOutConfirmation(data);
         }
 
@@ -78,11 +78,15 @@ namespace DxSyncClient.VesselInventory
 
             foreach (var row in list)
             {
-                if (row.IsFile) SyncFile(row);
-                else SyncData(row);
-                SetSyncProcessed(row.RecordStageId);
+                if (row.IsFile)
+                {
+                    FileSyncOut(row);
+                } else
+                {
+                    DataSyncOut(row);
+                }
+                SetProcessedSyncOut(row.RecordStageId);
             }
-
         }
 
         /// <summary>
@@ -94,8 +98,13 @@ namespace DxSyncClient.VesselInventory
 
             foreach (var row in list)
             {
-                if (row.IsFile) ConfirmFile(row);
-                else ConfirmData(row);
+                if (row.IsFile)
+                {
+                    FileSyncOutConfirmation(row);
+                } else
+                {
+                    DataSyncOutConfirmation(row);
+                }
             }
         }
 
@@ -103,7 +112,7 @@ namespace DxSyncClient.VesselInventory
         /// Synchronize data, get record from table in database and send the record to server
         /// </summary>
         /// <param name="row"></param>
-        protected void SyncData(DxSyncOutRecordStage row)
+        protected void DataSyncOut(DxSyncOutRecordStage row)
         {
             object data = GetReferenceData(row);
             SendData(row, data);
@@ -127,7 +136,7 @@ namespace DxSyncClient.VesselInventory
         /// Confirm data
         /// </summary>
         /// <param name="syncRecordStage"></param>
-        protected void ConfirmData(DxSyncOutRecordStage syncRecordStage)
+        protected void DataSyncOutConfirmation(DxSyncOutRecordStage syncRecordStage)
         {
             string endpoint = APISyncEndpoint.SyncOutConfirmation;
             ResponseData result = PostData(endpoint, syncRecordStage);
@@ -138,11 +147,11 @@ namespace DxSyncClient.VesselInventory
 
             if (result.StatusCode == HttpResponseCode.OK)
             {
-                SetSyncComplete(syncRecordStage.RecordStageId);
+                SetCompleteSyncOut(syncRecordStage.RecordStageId);
             }
             else if (result.StatusCode == HttpResponseCode.NOT_FOUND)
             {
-                SetUnSync(syncRecordStage.RecordStageId);
+                SetUnSyncSyncOut(syncRecordStage.RecordStageId);
             }
         }
 
@@ -161,9 +170,9 @@ namespace DxSyncClient.VesselInventory
         ///    then Convert the chunk of binary to base64string.
         /// </summary>
         /// <param name="syncRecordStage"></param>
-        protected void SyncFile(DxSyncOutRecordStage syncRecordStage)
+        protected void FileSyncOut(DxSyncOutRecordStage syncRecordStage)
         {
-            var fileUpload = EnvClass.Client.UploadPath + syncRecordStage.Filename;
+            var fileUpload = SetupEnvironment.Client.UploadPath + syncRecordStage.Filename;
             if (File.Exists(fileUpload))
             {
                 int currentSize = CheckFileData(syncRecordStage);
@@ -176,7 +185,7 @@ namespace DxSyncClient.VesselInventory
                     int fileSizeClient = file.Length;
                     int remainSize = fileSizeClient - currentSize;
 
-                    const int chunkSize = EnvClass.HelperValue.ChunkSize;
+                    const int chunkSize = SetupEnvironment.HelperValue.ChunkSize;
 
                     while (remainSize > 0)
                     {
@@ -194,7 +203,7 @@ namespace DxSyncClient.VesselInventory
                                 IsNewFile = (currentSize == 0) ? true : false
                             };
 
-                            int fileSizeServer = SendFileData(syncRecordStage, syncFile);
+                            int fileSizeServer = SendFile(syncRecordStage, syncFile);
 
                             if (fileSizeServer == -1) break;
 
@@ -236,7 +245,7 @@ namespace DxSyncClient.VesselInventory
         /// <param name="syncRecordStage"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        protected int SendFileData(DxSyncOutRecordStage syncRecordStage, object data)
+        protected int SendFile(DxSyncOutRecordStage syncRecordStage, object data)
         {
             string endpoint = APISyncEndpoint.SyncOutFile;
             var result = PostData(endpoint, syncRecordStage, data);
@@ -258,9 +267,9 @@ namespace DxSyncClient.VesselInventory
         /// Confirm the file, if the file is completed sync (file is match) update the staging to sync complete
         /// </summary>
         /// <param name="syncRecordStage"></param>
-        protected void ConfirmFile(DxSyncOutRecordStage syncRecordStage)
+        protected void FileSyncOutConfirmation(DxSyncOutRecordStage syncRecordStage)
         {
-            var fileUpload = EnvClass.Client.UploadPath + syncRecordStage.Filename;
+            var fileUpload = SetupEnvironment.Client.UploadPath + syncRecordStage.Filename;
             if (File.Exists(fileUpload))
             {
                 string endpoint = APISyncEndpoint.SyncOutFileConfirmation;
@@ -280,11 +289,11 @@ namespace DxSyncClient.VesselInventory
                 {
                     int remainFileSize = (int)((JObject)result.Data).SelectToken("RemainFileSize");
 
-                    if(remainFileSize == 0) SetSyncComplete(syncRecordStage.RecordStageId);
-                    else SetUnSync(syncRecordStage.RecordStageId);
+                    if(remainFileSize == 0) SetCompleteSyncOut(syncRecordStage.RecordStageId);
+                    else SetUnSyncSyncOut(syncRecordStage.RecordStageId);
                 } else if(result.StatusCode == HttpResponseCode.NOT_FOUND)
                 {
-                    SetUnSync(syncRecordStage.RecordStageId);
+                    SetUnSyncSyncOut(syncRecordStage.RecordStageId);
                 }
             }
         }
@@ -316,9 +325,9 @@ namespace DxSyncClient.VesselInventory
         /// <param name="syncRecordStage"></param>
         protected void SetQueryParamsAndHeader(RequestAPI requestAPI, DxSyncOutRecordStage syncRecordStage)
         {
-            requestAPI.AddHeader("X-Token", EnvClass.Client.Token);
-            requestAPI.AddQueryParam("DomainName", EnvClass.Client.ApplicationName);
-            requestAPI.AddQueryParam("ClientId", EnvClass.Client.ClientId.ToString());
+            requestAPI.AddHeader("X-Token", SetupEnvironment.Client.Token);
+            requestAPI.AddQueryParam("DomainName", SetupEnvironment.Client.ApplicationName);
+            requestAPI.AddQueryParam("ClientId", SetupEnvironment.Client.ClientId.ToString());
             requestAPI.AddQueryParam("EntityName", syncRecordStage.EntityName);
             requestAPI.AddQueryParam("ReferenceId", syncRecordStage.ReferenceId);
             requestAPI.AddQueryParam("RecordStageId", syncRecordStage.RecordStageId);

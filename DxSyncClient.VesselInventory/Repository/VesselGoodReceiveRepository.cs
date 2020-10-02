@@ -6,12 +6,13 @@ using System.Transactions;
 using DxSync.Entity.VesselInventory;
 using DxSync.FxLib;
 using Dapper;
+using DxSyncClient.VesselInventory.Setup;
 
 namespace DxSyncClient.VesselInventory.Repository
 {
     public class VesselGoodReceiveRepository : SyncRecordStageRepository
     {
-        public void InitializeData()
+        public void TransferFromMainToStaging()
         {
             var vesselGoodReceiveIds = GetVesselGoodReceiveIds();
 
@@ -114,7 +115,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 RecordStageId = recordStageId,
                 RecordStageParentId = recordStageParentId,
                 ReferenceId = vesselGoodReceiveItemRejectId,
-                ClientId = EnvClass.Client.ClientId,
+                ClientId = SetupEnvironment.Client.ClientId,
                 EntityName = typeof(VesselGoodReceiveItemReject).Name,
                 IsFile = false,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
@@ -158,9 +159,9 @@ namespace DxSyncClient.VesselInventory.Repository
                 dxSyncRecordStages.Add(new DxSyncOutRecordStage
                 {
                     RecordStageId = Guid.NewGuid().ToString(),
-                    RecordStageParentId = EnvClass.HelperValue.Root,
+                    RecordStageParentId = SetupEnvironment.HelperValue.Root,
                     ReferenceId = vesselGoodReceiveId.ToString(),
-                    ClientId = EnvClass.Client.ClientId,
+                    ClientId = SetupEnvironment.Client.ClientId,
                     EntityName = typeof(VesselGoodReceive).Name,
                     IsFile = false,
                     LastSyncAt = DateTime.Now,
@@ -215,7 +216,7 @@ namespace DxSyncClient.VesselInventory.Repository
             string vesselGoodReceiveIds_ = string.Join(",", vesselGoodReceiveIds);
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
-                string query = $@"SELECT *, {EnvClass.Client.ClientId} AS ClientId, {1} AS Version
+                string query = $@"SELECT *, {SetupEnvironment.Client.ClientId} AS ClientId, {1} AS Version
                              FROM [dbo].[VesselGoodReceiveItemReject]
                              WHERE [VesselGoodReceiveId] IN ({vesselGoodReceiveIds_})
                              AND SyncStatus = 'NOT SYNC' AND ISHidden = 0 ";

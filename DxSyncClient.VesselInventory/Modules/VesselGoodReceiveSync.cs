@@ -1,19 +1,20 @@
 ﻿using DxSync.FxLib;
 using DxSync.Entity.VesselInventory;
 using DxSyncClient.VesselInventory.Repository;
+using DxSyncClient.VesselInventory.Abstractions;
 
 namespace DxSyncClient.VesselInventory.Modules
 {
-    public class VesselGoodReceiveSync : AbstractModuleClientSync
+    public class VesselGoodReceiveSync : AbstractBaseSynchronization
     {
         private readonly VesselGoodReceiveRepository _vesselGoodReceiveRepository;
-        public VesselGoodReceiveSync()
+        public VesselGoodReceiveSync() : base(new SyncRecordStageRepository())
         {
             _vesselGoodReceiveRepository = RepositoryFactory.VesselGoodReceiveRepository;
         }
-        public void InitializeData()
+        public void TransferFromMainToStaging()
         {
-             _vesselGoodReceiveRepository.InitializeData();
+             _vesselGoodReceiveRepository.TransferFromMainToStaging();
         }
         public void SyncOut()
         {

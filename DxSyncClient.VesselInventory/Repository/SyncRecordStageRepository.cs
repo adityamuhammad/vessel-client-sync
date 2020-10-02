@@ -1,12 +1,14 @@
 ﻿using Dapper;
 using DxSync.FxLib;
+using DxSyncClient.Contract.Interfaces;
+using DxSyncClient.VesselInventory.Setup;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 
 namespace DxSyncClient.VesselInventory.Repository
 {
-    public class SyncRecordStageRepository
+    public class SyncRecordStageRepository : ISyncRecordStageRepository
     {
         protected void CreateSyncOutStaging(IList<DxSyncOutRecordStage> syncRecordStages)
         {
@@ -26,7 +28,7 @@ namespace DxSyncClient.VesselInventory.Repository
             }
         }
 
-        public IEnumerable<DxSyncOutRecordStage> GetSyncOutStaging<THeader, TDetail>(string statusStage) 
+        public IEnumerable<DxSyncOutRecordStage> GetStagingSyncOut<THeader, TDetail>(string statusStage) 
             where THeader: class 
             where TDetail: class
         {
@@ -43,7 +45,7 @@ namespace DxSyncClient.VesselInventory.Repository
             }
         }
 
-        public IEnumerable<DxSyncOutRecordStage> GetSyncOutStaging<TData>(string statusStage)
+        public IEnumerable<DxSyncOutRecordStage> GetStagingSyncOut<TData>(string statusStage)
         {
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
@@ -57,7 +59,7 @@ namespace DxSyncClient.VesselInventory.Repository
             }
         }
 
-        public void UpdateSyncOutStaging(string recordStageId, string statusStage)
+        public void UpdateStagingSyncOut(string recordStageId, string statusStage)
         {
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
