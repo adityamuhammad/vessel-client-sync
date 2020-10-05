@@ -20,18 +20,14 @@ namespace DxSyncClient.VesselInventory.Modules
 
         public void SyncOut()
         {
-            var data = _requestFormRepository.GetStagingSyncOut
-                <RequestForm,RequestFormItem>(DxSyncStatusStage.UN_SYNC);
-            ProcessSyncOut(data);
+            SyncOut<RequestForm,RequestFormItem>();
         }
         public void SyncOutConfirmation()
         {
-            var data = _requestFormRepository.GetStagingSyncOut
-                <RequestForm,RequestFormItem>(DxSyncStatusStage.SYNC_PROCESSED);
-            ProcessSyncOutConfirmation(data);
+            SyncOutConfirmation<RequestForm,RequestFormItem>();
         }
 
-        protected override object GetReferenceData(DxSyncOutRecordStage syncRecordStage)
+        protected override object GetReferenceDataSyncOut(DxSyncOutRecordStage syncRecordStage)
         {
             object data = null;
             if (syncRecordStage.EntityName == typeof(RequestForm).Name)
@@ -41,5 +37,24 @@ namespace DxSyncClient.VesselInventory.Modules
             return data;
         }
 
+        public  void SyncIn()
+        {
+            SyncIn<RequestFormItem>();
+        }
+
+        public void SyncInConfirmation()
+        {
+            SyncInConfirmation<RequestFormItem>();
+        }
+
+        public void SyncInComplete()
+        {
+            SyncInComplete<RequestFormItem>();
+        }
+
+        protected override void CreateRowTransaction(DxSyncInRecordStage syncInRecordStage, object referenceData)
+        {
+            _requestFormRepository.CreateItemSyncIn(syncInRecordStage, (RequestFormItem)referenceData);
+        }
     }
 }

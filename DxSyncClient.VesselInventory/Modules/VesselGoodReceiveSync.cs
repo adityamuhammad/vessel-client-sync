@@ -26,7 +26,7 @@ namespace DxSyncClient.VesselInventory.Modules
             SyncOutConfirmation<VesselGoodReceive, VesselGoodReceiveItemReject>();
         }
 
-        protected override object GetReferenceData(DxSyncOutRecordStage recordStage)
+        protected override object GetReferenceDataSyncOut(DxSyncOutRecordStage recordStage)
         {
             object data = null;
             if (recordStage.EntityName == typeof(VesselGoodReceive).Name)
@@ -36,5 +36,24 @@ namespace DxSyncClient.VesselInventory.Modules
             return data;
         }
 
+        public  void SyncIn()
+        {
+            SyncIn<VesselGoodReceiveItem>();
+        }
+
+        public void SyncInConfirmation()
+        {
+            SyncInConfirmation<VesselGoodReceiveItem>();
+        }
+
+        public void SyncInComplete()
+        {
+            SyncInComplete<VesselGoodReceiveItem>();
+        }
+
+        protected override void CreateRowTransaction(DxSyncInRecordStage syncInRecordStage, object referenceData)
+        {
+            _vesselGoodReceiveRepository.CreateItemSyncIn(syncInRecordStage, (VesselGoodReceiveItem)referenceData);
+        }
     }
 }

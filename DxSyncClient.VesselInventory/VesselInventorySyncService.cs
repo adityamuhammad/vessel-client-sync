@@ -10,6 +10,8 @@ namespace DxSyncClient.VesselInventory
         private readonly VesselGoodIssuedSync _vesselGoodIssuedSync;
         private readonly VesselGoodReturnSync _vesselGoodReturnSync;
         private readonly VesselGoodJournalSync _vesselGoodJournalSync;
+        private readonly ItemDimensionSync _itemDimensionSync;
+        private readonly ItemSync _itemSync;
         public VesselInventorySyncService()
         {
             _requestFormSync = ModuleFactory.RequestFormSync;
@@ -17,6 +19,8 @@ namespace DxSyncClient.VesselInventory
             _vesselGoodIssuedSync = ModuleFactory.VesselGoodIssuedSync;
             _vesselGoodReturnSync = ModuleFactory.VesselGoodReturnSync;
             _vesselGoodJournalSync = ModuleFactory.VesselGoodJournalSync;
+            _itemDimensionSync = ModuleFactory.ItemDimensionSync;
+            _itemSync = ModuleFactory.ItemSync;
         }
 
         public void TransferFromMainToStaging()
@@ -46,11 +50,26 @@ namespace DxSyncClient.VesselInventory
         }
         public void SyncIn()
         {
-            
+            _requestFormSync.SyncIn();
+            _vesselGoodReceiveSync.SyncIn();
+            _itemSync.SyncIn();
+            _itemDimensionSync.SyncIn();
         }
 
         public void SyncInConfirmation()
         {
+            _requestFormSync.SyncInConfirmation();
+            _vesselGoodReceiveSync.SyncInConfirmation();
+            _itemSync.SyncInConfirmation();
+            _itemDimensionSync.SyncInConfirmation();
+        }
+
+        public void SyncInComplete()
+        {
+            _requestFormSync.SyncInComplete();
+            _vesselGoodReceiveSync.SyncInComplete();
+            _itemSync.SyncInComplete();
+            _itemDimensionSync.SyncInComplete();
         }
     }
 }

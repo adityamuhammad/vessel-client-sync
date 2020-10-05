@@ -16,11 +16,7 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             var vesselGoodReceiveIds = GetVesselGoodReceiveIds();
 
-            if (vesselGoodReceiveIds.Count() == 0)
-            {
-                return;
-            }
-
+            if (vesselGoodReceiveIds.Count() == 0) return;
 
             IList<DxSyncOutRecordStage> syncRecordStages = new List<DxSyncOutRecordStage>();
 
@@ -54,6 +50,45 @@ namespace DxSyncClient.VesselInventory.Repository
                     }
                 }
             }
+        }
+        public void CreateItemSyncIn(DxSyncInRecordStage recordStages, VesselGoodReceiveItem vesselGoodReceiveItem)
+        {
+            using (TransactionScope scope = new TransactionScope())
+            {
+                try
+                {
+                    CreateStagingSyncIn(recordStages);
+                    CreateItemReferenceDataSyncIn(vesselGoodReceiveItem);
+                    scope.Complete();
+                } catch (Exception) { }
+            }
+        }
+
+        private void CreateItemReferenceDataSyncIn(VesselGoodReceiveItem vesselGoodReceiveItem)
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                connection.Open();
+                var query =
+                    @"INSERT INTO [dbo].[In_VesselGoodReceiveItem]
+                           ([VesselGoodReceiveItemId] ,[VesselGoodReceiveId] ,[RequestFormNumber]
+                           ,[ItemId] ,[ItemGroupId] ,[ItemName]
+                           ,[ItemDimensionNumber] ,[BrandTypeId] ,[BrandTypeName]
+                           ,[ColorSizeId] ,[ColorSizeName] ,[Qty]
+                           ,[Uom] ,[SyncStatus] ,[CreatedDate]
+                           ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy]
+                           ,[IsHidden] ,[Version] ,[ClientId])
+                     VALUES
+                           (@VesselGoodReceiveItemId ,@VesselGoodReceiveId ,@RequestFormNumber
+                           ,@ItemId ,@ItemGroupId ,@ItemName ,@ItemDimensionNumber
+                           ,@BrandTypeId ,@BrandTypeName ,@ColorSizeId
+                           ,@ColorSizeName ,@Qty ,@Uom ,@SyncStatus
+                           ,@CreatedDate ,@CreatedBy ,@LastModifiedDate
+                           ,@LastModifiedBy ,@IsHidden ,@Version ,@ClientId)";
+
+                connection.Execute(query, vesselGoodReceiveItem);
+            }
+
         }
 
         public VesselGoodReceive GetVesselGoodReceive(string vesselGoodReceiveId, int version)
@@ -127,7 +162,7 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             using(TransactionScope scope = new TransactionScope())
             {
-                CreateSyncOutStaging(dxSyncRecordStages);
+                CreateStagingSyncOut(dxSyncRecordStages);
                 CopyVesselGoodReceiveToStaging();
                 CopyVesselGoodReceiveItemRejectToStaging(vesselGoodReceiveIds);
                 UpdateSyncStatusToOnStaging(vesselGoodReceiveIds);

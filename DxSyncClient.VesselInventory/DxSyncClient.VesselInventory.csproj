@@ -67,6 +67,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Abstractions\AbstractBaseSynchronization.cs" />
+    <Compile Include="Modules\ItemDimensionSync.cs" />
+    <Compile Include="Modules\ItemSync.cs" />
+    <Compile Include="Repository\ItemDimensionRepository.cs" />
+    <Compile Include="Repository\ItemRepository.cs" />
     <Compile Include="Setup\DbConnectionFactory.cs" />
     <Compile Include="Setup\SetupEnvironment.cs" />
     <Compile Include="GlobalSuppressions.cs" />

@@ -24,7 +24,7 @@ namespace DxSyncClient.VesselInventory.Abstractions
             _syncRecordStageRepository = syncRecordStageRepository;
         }
 
-        protected abstract object GetReferenceData(DxSyncOutRecordStage syncRecordStage);
+        protected abstract object GetReferenceDataSyncOut(DxSyncOutRecordStage syncRecordStage);
 
         protected void SetCompleteSyncOut(string recordStageId)
         {
@@ -39,6 +39,21 @@ namespace DxSyncClient.VesselInventory.Abstractions
         protected void SetProcessedSyncOut(string recordStageId)
         {
             _syncRecordStageRepository.UpdateStagingSyncOut(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
+        }
+
+        protected void SetProcessedSyncIn(string recordStageId)
+        {
+            _syncRecordStageRepository.UpdateStagingSyncIn(recordStageId, DxSyncStatusStage.SYNC_PROCESSED);
+        }
+
+        protected void SetCompleteSyncIn(string recordStageId)
+        {
+            _syncRecordStageRepository.UpdateStagingSyncIn(recordStageId, DxSyncStatusStage.SYNC_COMPLETE);
+        }
+
+        protected void SetUnSyncSyncIn(string recordStageId)
+        {
+            _syncRecordStageRepository.UpdateStagingSyncIn(recordStageId, DxSyncStatusStage.UN_SYNC);
         }
 
         protected void SyncOut<THeader,TDetail>() 
@@ -89,6 +104,52 @@ namespace DxSyncClient.VesselInventory.Abstractions
             }
         }
 
+        protected abstract void CreateRowTransaction(DxSyncInRecordStage syncInRecordStage, object referenceData);
+        protected void SyncIn<T>()
+        {
+            var syncRecordStage = new DxSyncRecordStage
+            {
+                ClientId = SetupEnvironment.Client.ClientId,
+                EntityName = typeof(T).Name
+            };
+            if (CheckAnySyncIn(syncRecordStage))
+            {
+                ReceiveData<T>(syncRecordStage);
+            }
+        }
+
+        protected void SyncInConfirmation<T>()
+        {
+            var data = _syncRecordStageRepository.GetStagingSyncIn<T>(DxSyncStatusStage.UN_SYNC);
+            ProcessSyncInConfirmation(data);
+        }
+        protected void SyncInComplete<T>()
+        {
+            var data = _syncRecordStageRepository.GetStagingSyncIn<T>(DxSyncStatusStage.SYNC_PROCESSED);
+            ProcessSyncInComplete(data);
+        }
+
+        private bool CheckAnySyncIn(DxSyncRecordStage syncRecordStage)
+        {
+            var responseData = PostData(RequestAPIModule.APISyncEndpoint.SyncInCheck, syncRecordStage);
+            if (responseData == null) return false;
+            int totalSyncIn = (int)((JObject)responseData.Data).SelectToken("NumberOfSyncIn");
+            if (totalSyncIn > 0) return true;
+            else return false;
+        }
+
+        private void ReceiveData<T>(DxSyncRecordStage syncRecordStage)
+        {
+            var responseData = PostData(RequestAPIModule.APISyncEndpoint.SyncIn, syncRecordStage);
+            var syncInRecordStages = JsonConvert.DeserializeObject<IList<DxSyncInRecordStage>>(responseData.Data.ToString());
+
+            foreach (var recordStage in syncInRecordStages)
+            {
+                var reference = JsonConvert.DeserializeObject<T>(recordStage.ReferenceData.ToString());
+                CreateRowTransaction(recordStage, reference);
+            }
+        }
+
         /// <summary>
         /// Recursively confirm the synchronize, from parent to detail
         /// </summary>
@@ -108,13 +169,34 @@ namespace DxSyncClient.VesselInventory.Abstractions
             }
         }
 
+        protected void ProcessSyncInConfirmation(IEnumerable<DxSyncInRecordStage> list)
+        {
+            foreach (var row in list)
+            {
+                DataSyncInConfirmation(row);
+            }
+        }
+
+        protected void ProcessSyncInComplete(IEnumerable<DxSyncInRecordStage> list)
+        {
+            foreach (var row in list)
+            {
+                DataSyncInComplete(row);
+            }
+        }
+
+        /// <summary>
+        /// Sync out for record only
+        /// </summary>
+        #region
+
         /// <summary>
         /// Synchronize data, get record from table in database and send the record to server
         /// </summary>
         /// <param name="row"></param>
         protected void DataSyncOut(DxSyncOutRecordStage row)
         {
-            object data = GetReferenceData(row);
+            object data = GetReferenceDataSyncOut(row);
             SendData(row, data);
         }
 
@@ -131,6 +213,7 @@ namespace DxSyncClient.VesselInventory.Abstractions
 
             WriteLog(endpoint, result, data);
         }
+
 
         /// <summary>
         /// Confirm data
@@ -154,6 +237,43 @@ namespace DxSyncClient.VesselInventory.Abstractions
                 SetUnSyncSyncOut(syncRecordStage.RecordStageId);
             }
         }
+        protected void DataSyncInConfirmation(DxSyncInRecordStage syncRecordStage)
+        {
+            string endpoint = APISyncEndpoint.SyncInConfirmation;
+            ResponseData result = PostData(endpoint, syncRecordStage);
+
+            WriteLog(endpoint, result, syncRecordStage);
+
+            if (result == null) return;
+
+            if (result.StatusCode == HttpResponseCode.OK)
+            {
+                int rowAffected = (int)((JObject)result.Data).SelectToken("NumberOfSyncIn");
+                if (rowAffected > 0) SetProcessedSyncIn(syncRecordStage.RecordStageId);
+            }
+        }
+
+        protected void DataSyncInComplete(DxSyncInRecordStage syncRecordStage)
+        {
+            string endpoint = APISyncEndpoint.SyncInComplete;
+            ResponseData result = PostData(endpoint, syncRecordStage);
+
+            WriteLog(endpoint, result, syncRecordStage);
+
+            if (result == null) return;
+
+            if (result.StatusCode == HttpResponseCode.OK)
+            {
+                int rowAffected = (int)((JObject)result.Data).SelectToken("NumberOfSyncIn");
+                if (rowAffected > 0) SetCompleteSyncIn(syncRecordStage.RecordStageId);
+            }
+        }
+        #endregion
+
+        /// <summary>
+        /// Sync out for file only
+        /// </summary>
+        #region
 
         /// <summary>
         /// Sync file
@@ -297,7 +417,12 @@ namespace DxSyncClient.VesselInventory.Abstractions
                 }
             }
         }
+        #endregion
 
+        /// <summary>
+        /// Helper
+        /// </summary>
+        #region
         /// <summary>
         /// Post data to server endpoint is the url, syncrecordstage is query parameter, data is body
         /// </summary>
@@ -305,7 +430,7 @@ namespace DxSyncClient.VesselInventory.Abstractions
         /// <param name="syncRecordStage"></param>
         /// <param name="data"></param>
         /// <returns></returns>
-        private ResponseData PostData(string endpoint, DxSyncOutRecordStage syncRecordStage, object data = null)
+        protected ResponseData PostData(string endpoint, DxSyncRecordStage syncRecordStage, object data = null)
         {
             Task<ResponseData> responseData = Task.Run(async () =>
             {
@@ -323,7 +448,7 @@ namespace DxSyncClient.VesselInventory.Abstractions
         /// </summary>
         /// <param name="requestAPI"></param>
         /// <param name="syncRecordStage"></param>
-        protected void SetQueryParamsAndHeader(RequestAPI requestAPI, DxSyncOutRecordStage syncRecordStage)
+        protected void SetQueryParamsAndHeader(RequestAPI requestAPI, DxSyncRecordStage syncRecordStage)
         {
             requestAPI.AddHeader("X-Token", SetupEnvironment.Client.Token);
             requestAPI.AddQueryParam("DomainName", SetupEnvironment.Client.ApplicationName);
@@ -351,5 +476,6 @@ namespace DxSyncClient.VesselInventory.Abstractions
                                 + DateTime.Now + "\n " + endpoint + "\n " + body  + "\n" + response ;
             _logger.Write(logMessage);
         }
+        #endregion
     }
 }

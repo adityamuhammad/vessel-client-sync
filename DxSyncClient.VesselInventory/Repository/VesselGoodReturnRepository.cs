@@ -132,7 +132,7 @@ namespace DxSyncClient.VesselInventory.Repository
 
             using(TransactionScope scope = new TransactionScope())
             {
-                CreateSyncOutStaging(syncOutRecordStages);
+                CreateStagingSyncOut(syncOutRecordStages);
                 CopyVesselGoodReturnToStaging();
                 CopyVesselGoodReturnItemToStaging(vesselGoodReturnIds);
                 UpdateSyncStatusToOnStaging(vesselGoodReturnIds_);

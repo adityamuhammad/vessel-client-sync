@@ -28,9 +28,14 @@ namespace DxSyncClient.VesselInventory.Modules
             SyncOutConfirmation<VesselGoodJournal>();
         }
 
-        protected override object GetReferenceData(DxSyncOutRecordStage syncRecordStage)
+        protected override object GetReferenceDataSyncOut(DxSyncOutRecordStage syncRecordStage)
         {
             return _vesselgoodJournalRepository.GetVesselGoodJournal(syncRecordStage.ReferenceId, syncRecordStage.Version);
+        }
+
+        protected override void CreateRowTransaction(DxSyncInRecordStage syncInRecordStage, object referenceData)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

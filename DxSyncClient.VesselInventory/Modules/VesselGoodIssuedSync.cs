@@ -25,7 +25,7 @@ namespace DxSyncClient.VesselInventory.Modules
         {
             SyncOutConfirmation<VesselGoodIssued, VesselGoodIssuedItem>();
         }
-        protected override object GetReferenceData(DxSyncOutRecordStage syncRecordStage)
+        protected override object GetReferenceDataSyncOut(DxSyncOutRecordStage syncRecordStage)
         {
             object data = null;
             if (syncRecordStage.EntityName == typeof(VesselGoodIssued).Name)
@@ -33,6 +33,11 @@ namespace DxSyncClient.VesselInventory.Modules
             else if (syncRecordStage.EntityName == typeof(VesselGoodIssuedItem).Name)
                 data = _vesselGoodIssuedRepository.GetVesselGoodIssuedItem(syncRecordStage.ReferenceId, syncRecordStage.Version);
             return data;
+        }
+
+        protected override void CreateRowTransaction(DxSyncInRecordStage syncInRecordStage, object referenceData)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

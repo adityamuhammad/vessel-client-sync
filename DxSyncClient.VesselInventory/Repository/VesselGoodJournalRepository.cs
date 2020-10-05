@@ -110,7 +110,7 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             using(TransactionScope scope = new TransactionScope())
             {
-                CreateSyncOutStaging(dxSyncRecordStages);
+                CreateStagingSyncOut(dxSyncRecordStages);
                 CopyVesselGoodJournalItemToStaging(journalIds);
                 UpdateSyncStatusToOnStaging(journalIds);
                 scope.Complete();

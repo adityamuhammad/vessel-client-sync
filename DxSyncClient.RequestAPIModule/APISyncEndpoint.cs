@@ -11,5 +11,9 @@
         public const string SyncOutFileCheck = Host + "api/sync/file_out_check";
         public const string SyncOutFile = Host + "api/sync/file_out";
         public const string SyncOutFileConfirmation = Host + "api/sync/file_out_confirmation";
+        public const string SyncInCheck = Host + "api/sync/sync_in_check";
+        public const string SyncIn = Host + "api/sync/sync_in";
+        public const string SyncInConfirmation = Host + "api/sync/sync_in_confirmation";
+        public const string SyncInComplete = Host + "api/sync/sync_in_complete";
     }
 }

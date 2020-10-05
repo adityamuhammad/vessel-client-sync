@@ -18,10 +18,7 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             var requestFormIds = GetRequestFormIds();
 
-            if (requestFormIds.Count() == 0)
-            {
-                return;
-            }
+            if (requestFormIds.Count() == 0) return;
 
             IList<DxSyncOutRecordStage> syncOutRecordStages = new List<DxSyncOutRecordStage>();
 
@@ -67,6 +64,45 @@ namespace DxSyncClient.VesselInventory.Repository
                         RequestFormItemId = requestFormItemId,
                         Version = version
                     }).SingleOrDefault();
+            }
+        }
+
+        private void CreateItemReferenceDataSyncIn(RequestFormItem requestFormItems)
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                connection.Open();
+                var query =
+                    @"INSERT INTO [dbo].[In_RequestFormItem]
+                       ([RequestFormItemId] ,[ClientId] ,[Version] ,[RequestFormId] ,[ItemId] ,[ItemName] ,[ItemGroupId] ,[ItemDimensionNumber]
+                       ,[BrandTypeId] ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom]
+                       ,[Priority] ,[Reason] ,[Remarks] ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty]
+                       ,[LastRequestDate] ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
+                       ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden])
+                     VALUES 
+                       (@RequestFormItemId ,@ClientId ,@Version ,@RequestFormId ,@ItemId ,@ItemName ,@ItemGroupId ,@ItemDimensionNumber
+                       ,@BrandTypeId ,@BrandTypeName ,@ColorSizeId ,@ColorSizeName ,@Qty ,@Uom ,@Priority
+                       ,@Reason ,@Remarks ,@AttachmentPath ,@ItemStatus ,@LastRequestQty ,@LastRequestDate
+                       ,@LastSupplyQty ,@LastSupplyDate ,@Rob ,@SyncStatus ,@CreatedDate ,@CreatedBy ,@LastModifiedDate
+                       ,@LastModifiedBy ,@IsHidden)";
+
+                connection.Execute(query, requestFormItems);
+            }
+        }
+        
+        public void CreateItemSyncIn(DxSyncInRecordStage recordStages, RequestFormItem requestFormItems)
+        {
+            using (TransactionScope scope = new TransactionScope())
+            {
+                try
+                {
+                    CreateStagingSyncIn(recordStages);
+                    CreateItemReferenceDataSyncIn(requestFormItems);
+                    scope.Complete();
+
+                }
+                catch (Exception) { }
+
             }
         }
 
@@ -156,7 +192,7 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             using(TransactionScope scope = new TransactionScope())
             {
-                CreateSyncOutStaging(syncOutRecordStages);
+                CreateStagingSyncOut(syncOutRecordStages);
                 CopyRequestFormToStaging();
                 CopyRequestFormItemToStaging(requestFormIds);
                 UpdateSyncStatusToOnStaging(requestFormIds);
