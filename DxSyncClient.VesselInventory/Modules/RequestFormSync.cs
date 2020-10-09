@@ -18,6 +18,11 @@ namespace DxSyncClient.VesselInventory.Modules
              _requestFormRepository.TransferFromMainToStaging();
         }
 
+        public void TransferFromStagingToMain()
+        {
+            _requestFormRepository.TransferFromStagingToMain();
+        }
+
         public void SyncOut()
         {
             SyncOut<RequestForm,RequestFormItem>();
@@ -31,9 +36,9 @@ namespace DxSyncClient.VesselInventory.Modules
         {
             object data = null;
             if (syncRecordStage.EntityName == typeof(RequestForm).Name)
-                data = _requestFormRepository.GetRequestForm(syncRecordStage.ReferenceId, syncRecordStage.Version);
+                data = _requestFormRepository.GetRequestFormOut(syncRecordStage.ReferenceId, syncRecordStage.Version);
             else if (syncRecordStage.EntityName == typeof(RequestFormItem).Name)
-                data = _requestFormRepository.GetRequestFormItem(syncRecordStage.ReferenceId, syncRecordStage.Version);
+                data = _requestFormRepository.GetRequestFormItemOut(syncRecordStage.ReferenceId, syncRecordStage.Version);
             return data;
         }
 

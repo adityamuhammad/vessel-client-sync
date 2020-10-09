@@ -21,6 +21,11 @@ namespace DxSyncClient.VesselInventory.Modules
             SyncInConfirmation<ItemDimension>();
         }
 
+        public void TransferFromStagingToMain()
+        {
+            _ItemDimensionRepository.TransferFromStagingToMain();
+        }
+
         public void SyncInComplete()
         {
             SyncInComplete<ItemDimension>();

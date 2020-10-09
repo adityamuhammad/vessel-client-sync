@@ -16,6 +16,11 @@ namespace DxSyncClient.VesselInventory.Modules
         {
              _vesselGoodReceiveRepository.TransferFromMainToStaging();
         }
+
+        public void TransferFromStagingToMain()
+        {
+            _vesselGoodReceiveRepository.TransferFromStagingToMain();
+        }
         public void SyncOut()
         {
             SyncOut<VesselGoodReceive, VesselGoodReceiveItemReject>();
@@ -30,7 +35,7 @@ namespace DxSyncClient.VesselInventory.Modules
         {
             object data = null;
             if (recordStage.EntityName == typeof(VesselGoodReceive).Name)
-                data = _vesselGoodReceiveRepository.GetVesselGoodReceive(recordStage.ReferenceId, recordStage.Version);
+                data = _vesselGoodReceiveRepository.GetVesselGoodReceiveOut(recordStage.ReferenceId, recordStage.Version);
             else if (recordStage.EntityName == typeof(VesselGoodReceiveItemReject).Name)
                 data = _vesselGoodReceiveRepository.GetVesselGoodReceiveItemReject(recordStage.ReferenceId, recordStage.Version);
             return data;

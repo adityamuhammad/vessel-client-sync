@@ -71,5 +71,13 @@ namespace DxSyncClient.VesselInventory
             _itemSync.SyncInComplete();
             _itemDimensionSync.SyncInComplete();
         }
+
+        public void TransferFromStagingToMain()
+        {
+            _requestFormSync.TransferFromStagingToMain();
+            _vesselGoodReceiveSync.TransferFromStagingToMain();
+            _itemSync.TransferFromStagingToMain();
+            _itemDimensionSync.TransferFromStagingToMain();
+        }
     }
 }

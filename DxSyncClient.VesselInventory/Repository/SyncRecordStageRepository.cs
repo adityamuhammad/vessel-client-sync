@@ -54,7 +54,7 @@ namespace DxSyncClient.VesselInventory.Repository
             {
                 string query = 
                     $@"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
-                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount]
+                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount], [Version]
                       FROM [dbo].[SyncOutRecordStage]
                       WHERE [EntityName] IN
                             ('{typeof(THeader).Name}','{typeof(TDetail).Name}')
@@ -69,7 +69,7 @@ namespace DxSyncClient.VesselInventory.Repository
             {
                 string query = 
                     $@"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
-                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount]
+                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount], [Version]
                       FROM [dbo].[SyncOutRecordStage]
                       WHERE [EntityName] IN ('{typeof(TData).Name}')
                       AND [StatusStage] = @StatusStage";
@@ -82,7 +82,7 @@ namespace DxSyncClient.VesselInventory.Repository
             {
                 string query = 
                     $@"SELECT [RecordStageId], [RecordStageParentId], [ReferenceId] ,[ClientId] 
-                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount]
+                            ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount], [Version]
                       FROM [dbo].[SyncInRecordStage]
                       WHERE [EntityName] IN ('{typeof(TData).Name}')
                       AND [StatusStage] = @StatusStage";

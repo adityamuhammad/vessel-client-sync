@@ -13,6 +13,10 @@ namespace DxSyncClient.VesselInventory.Modules
         {
             _itemRepository = RepositoryFactory.ItemRepository;
         }
+        public void TransferFromStagingToMain()
+        {
+            _itemRepository.TransferFromStagingToMain();
+        }
 
         public void SyncIn()
         {

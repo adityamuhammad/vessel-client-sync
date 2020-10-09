@@ -143,6 +143,11 @@ namespace DxSyncClient.VesselInventory.Abstractions
             var responseData = PostData(RequestAPIModule.APISyncEndpoint.SyncIn, syncRecordStage);
             var syncInRecordStages = JsonConvert.DeserializeObject<IList<DxSyncInRecordStage>>(responseData.Data.ToString());
 
+            ProcessSyncIn<T>(syncInRecordStages);
+        }
+
+        private void ProcessSyncIn<T>(IList<DxSyncInRecordStage> syncInRecordStages)
+        {
             foreach (var recordStage in syncInRecordStages)
             {
                 var reference = JsonConvert.DeserializeObject<T>(recordStage.ReferenceData.ToString());
