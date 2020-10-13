@@ -16,6 +16,7 @@ namespace DxSyncClient.VesselInventory.Modules
         public void TransferFromMainToStaging()
         {
              _requestFormRepository.TransferFromMainToStaging();
+            _requestFormRepository.ResyncRequestFormItemToSyncOutStaging();
         }
 
         public void TransferFromStagingToMain()

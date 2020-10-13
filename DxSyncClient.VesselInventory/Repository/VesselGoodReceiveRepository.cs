@@ -252,6 +252,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 ClientId = SetupEnvironment.Client.ClientId,
                 EntityName = typeof(VesselGoodReceiveItemReject).Name,
                 IsFile = false,
+                Version = 1,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
                 LastSyncAt = DateTime.Now
             });
@@ -298,6 +299,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     ClientId = SetupEnvironment.Client.ClientId,
                     EntityName = typeof(VesselGoodReceive).Name,
                     IsFile = false,
+                    Version = 1,
                     LastSyncAt = DateTime.Now,
                     StatusStage = DxSyncStatusStage.UN_SYNC
                 });

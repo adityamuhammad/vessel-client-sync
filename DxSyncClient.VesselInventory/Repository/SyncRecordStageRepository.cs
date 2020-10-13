@@ -85,7 +85,7 @@ namespace DxSyncClient.VesselInventory.Repository
                             ,[StatusStage] ,[EntityName] ,[IsFile] ,[Filename], [DataCount], [Version]
                       FROM [dbo].[SyncInRecordStage]
                       WHERE [EntityName] IN ('{typeof(TData).Name}')
-                      AND [StatusStage] = @StatusStage";
+                      AND [StatusStage] = @StatusStage ORDER BY [Version]";
                 return connection.Query<DxSyncInRecordStage>(query, new { StatusStage = statusStage}).ToList();
             }
         }
@@ -117,6 +117,14 @@ namespace DxSyncClient.VesselInventory.Repository
                     RecordStageId = recordStageId,
                     StatusStage = statusStage
                 });
+            }
+        }
+        protected static int GetMaxVersionSyncOut(string referenceId, string entityName)
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                string query = @"SELECT ISNULL(MAX([Version]),0) FROM [dbo].[SyncOutRecordStage] WHERE [ReferenceId] = @ReferenceId AND [EntityName] = @EntityName"; ;
+                return connection.Query<int>(query, new { ReferenceId = referenceId, EntityName = entityName }).Single();
             }
         }
     }

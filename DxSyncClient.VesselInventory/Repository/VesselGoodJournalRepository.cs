@@ -67,6 +67,8 @@ namespace DxSyncClient.VesselInventory.Repository
                     query += $@"AND [DocumentReference] IN ({documentReferences_})";
                 }
 
+                query += " OR ([InOut] = 'In' AND [DocumentType] = 'Vessel Good Receive' AND [SyncStatus] = 'NOT SYNC')";
+
                 IDbCommand command = connection.CreateCommand();
                 command.CommandText = query;
                 connection.Open();
@@ -183,6 +185,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 ClientId = SetupEnvironment.Client.ClientId,
                 EntityName = typeof(VesselGoodJournal).Name,
                 IsFile = false,
+                Version = 1,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
                 LastSyncAt = DateTime.Now
             });

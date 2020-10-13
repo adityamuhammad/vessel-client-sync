@@ -28,22 +28,21 @@ namespace DxSyncClient.VesselInventory.Repository
                             if(staging.Version > 1)
                             {
                                 query = @" UPDATE [dbo].[ItemDimension]
-                                           SET [ItemDimensionNumber] = @ItemDimensionNumber
-                                              ,[ItemId] = @ItemId
+                                           SET [ItemId] = @ItemId
                                               ,[BrandTypeId] = @BrandTypeId
                                               ,[BrandTypeName] = @BrandTypeName
                                               ,[ColorSizeId] = @ColorSizeId
                                               ,[ColorSizeName] = @ColorSizeName
                                               ,[SyncStatus] = @SyncStatus
-                                            WHERE [ItemDimensionId] = @ItemDimensionId";
+                                            WHERE [ItemDimensionNumber] = @ItemDimensionNumber";
                             } else
                             {
                                 query = @"INSERT INTO [dbo].[ItemDimension]
-                                               ([ItemDimensionId] ,[ItemDimensionNumber] ,[ItemId]
+                                               ([ItemDimensionNumber] ,[ItemId]
                                                ,[BrandTypeId] ,[BrandTypeName] ,[ColorSizeId]
                                                ,[ColorSizeName] ,[SyncStatus])
                                            VALUES
-                                               (@ItemDimensionId ,@ItemDimensionNumber ,@ItemId
+                                               (@ItemDimensionNumber ,@ItemId
                                                ,@BrandTypeId ,@BrandTypeName ,@ColorSizeId
                                                ,@ColorSizeName ,@SyncStatus)";
                             }
@@ -66,18 +65,18 @@ namespace DxSyncClient.VesselInventory.Repository
 
         }
 
-        private ItemDimension GetItemDimensionIn(string itemDimensionId, int version)
+        private ItemDimension GetItemDimensionIn(string itemDimensionNumber, int version)
         {
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
             {
                 string query =
-                    @"SELECT [ItemDimensionId] ,[ItemDimensionNumber] ,[ItemId] ,[BrandTypeId]
+                    @"SELECT [ItemDimensionNumber] ,[ItemId] ,[BrandTypeId]
                               ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName] ,[SyncStatus]
                               ,[Version] ,[ClientId]
-                      FROM [dbo].[In_ItemDimension] WHERE [ItemDimensionId] = @ItemDimensionId AND [Version] = @Version
+                      FROM [dbo].[In_ItemDimension] WHERE [ItemDimensionNumber] = @ItemDimensionNumber AND [Version] = @Version
                       ORDER BY [Version]";
                 return connection.Query<ItemDimension>(query, new {
-                        ItemDimensionId = itemDimensionId,
+                        ItemDimensionNumber = itemDimensionNumber,
                         Version = version
                 }).SingleOrDefault();
             }
@@ -90,11 +89,11 @@ namespace DxSyncClient.VesselInventory.Repository
                 connection.Open();
                 var query =
                     @"INSERT INTO [dbo].[In_ItemDimension]
-                       ([ItemDimensionId] ,[ItemDimensionNumber] ,[ItemId] ,[BrandTypeId]
+                       ([ItemDimensionNumber] ,[ItemId] ,[BrandTypeId]
                        ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName]
                        ,[SyncStatus] ,[Version] ,[ClientId])
                      VALUES
-                       (@ItemDimensionId ,@ItemDimensionNumber ,@ItemId ,@BrandTypeId
+                       (@ItemDimensionNumber ,@ItemId ,@BrandTypeId
                        ,@BrandTypeName ,@ColorSizeId ,@ColorSizeName
                        ,@SyncStatus ,@Version ,@ClientId)";
 

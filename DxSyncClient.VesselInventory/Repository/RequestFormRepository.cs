@@ -162,6 +162,64 @@ namespace DxSyncClient.VesselInventory.Repository
             }
         }
 
+
+        public void ResyncRequestFormItemToSyncOutStaging()
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+            {
+                var query = $@"SELECT * FROM [dbo].[RequestFormItem] WHERE [SyncStatus] = 'RE SYNC' AND [IsHidden] = 0";
+                IDbCommand command = connection.CreateCommand();
+                command.CommandText = query;
+                connection.Open();
+                IList<DxSyncOutRecordStage> syncOutRecordStages = new List<DxSyncOutRecordStage>();
+                IList<int> requestFormItemIds = new List<int>();
+                using (IDataReader reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        var requestFormItemId = reader["RequestFormItemId"].ToString();
+                        string attachment = reader["AttachmentPath"].ToString();
+
+                        var version = GetMaxVersionSyncOut(requestFormItemId, typeof(RequestFormItem).Name);
+                        requestFormItemIds.Add(int.Parse(requestFormItemId));
+
+                        syncOutRecordStages.Add(new DxSyncOutRecordStage
+                        {
+                            ClientId = SetupEnvironment.Client.ClientId,
+                            DataCount = 0,
+                            EntityName = typeof(RequestFormItem).Name,
+                            IsFile = true,
+                            LastSyncAt = DateTime.Now,
+                            Filename = attachment,
+                            RecordStageParentId = SetupEnvironment.HelperValue.Root,
+                            RecordStageId = Guid.NewGuid().ToString(),
+                            StatusStage = DxSyncStatusStage.UN_SYNC,
+                            ReferenceId = requestFormItemId,
+                            Version = version + 1
+                        });
+                    }
+                }
+                if (requestFormItemIds.Count() > 0)
+                {
+                    using(TransactionScope scope = new TransactionScope())
+                    {
+                        CreateStagingSyncOut(syncOutRecordStages);
+                        using (IDbConnection connection2 = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
+                        {
+                            connection2.Open();
+                            var requestFormItemIds_ = string.Join(",", requestFormItemIds);
+                            string update = $@"UPDATE [dbo].[RequestFormItem] 
+                                                SET [SyncStatus] = 'ON STAGING' 
+                                                WHERE [RequestFormItemId] IN ({requestFormItemIds_})";
+                            connection.Execute(update);
+                        }
+                        scope.Complete();
+                    }
+                }
+            }
+
+        }
+
         private static void AddRequestFormItemIdToSyncOutStaging(IList<DxSyncOutRecordStage> syncOutRecordStages, IEnumerable<int> requestFormIds)
         {
             string requestFormIds_ = string.Join(",", requestFormIds);
@@ -325,6 +383,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 ClientId = SetupEnvironment.Client.ClientId,
                 EntityName = typeof(RequestFormItem).Name,
                 IsFile = false,
+                Version = 1,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
                 LastSyncAt = DateTime.Now
             });
@@ -340,6 +399,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 EntityName = typeof(RequestFormItem).Name,
                 ClientId = SetupEnvironment.Client.ClientId,
                 IsFile = true,
+                Version = 1,
                 Filename = attachment,
                 StatusStage = DxSyncStatusStage.UN_SYNC,
                 LastSyncAt = DateTime.Now
@@ -358,6 +418,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     ClientId = SetupEnvironment.Client.ClientId,
                     EntityName = typeof(RequestForm).Name,
                     IsFile = false,
+                    Version = 1,
                     LastSyncAt = DateTime.Now,
                     StatusStage = DxSyncStatusStage.UN_SYNC
                 });
