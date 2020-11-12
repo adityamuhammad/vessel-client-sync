@@ -477,8 +477,7 @@ namespace DxSyncClient.VesselInventory.Abstractions
             string applicationName = ConfigurationManager.AppSettings["ApplicationName"];
             string body = JsonConvert.SerializeObject(data);
             string response = JsonConvert.SerializeObject(responseData);
-            string logMessage = @"" + applicationName +" "
-                                + DateTime.Now + "\n " + endpoint + "\n " + body  + "\n" + response ;
+            string logMessage = $@"{applicationName} {DateTime.Now}\n {endpoint}\n {body}\n {response}" ;
             _logger.Write(logMessage);
         }
         #endregion

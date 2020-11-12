@@ -45,6 +45,7 @@ namespace DxSyncClient.VesselInventory.Repository
                             string query = @"UPDATE [dbo].[RequestFormItem]
                                              SET [ApprovedQty] = @ApprovedQty
                                              ,[ItemStatus] = @ItemStatus
+                                             ,[IsDocumentPending] = @IsDocumentPending
                                              WHERE [RequestFormItemId] = @RequestFormItemId";
                             connection.Execute(query, refData);
                         }
@@ -92,7 +93,8 @@ namespace DxSyncClient.VesselInventory.Repository
                             ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom] ,[Priority] ,[Reason] ,[Remarks]
                             ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty] ,[LastRequestDate]
                             ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
-                            ,[CreatedBy] ,[LastModifiedDate] ,[ApprovedQty] ,[LastModifiedBy] ,[IsHidden], [ClientId] ,[Version]
+                            ,[CreatedBy] ,[LastModifiedDate] ,[ApprovedQty] ,[LastModifiedBy] 
+                            ,[IsHidden], [ClientId] ,[Version], [IsDocumentPending]
                       FROM [dbo].[Out_RequestFormItem] WHERE [RequestFormItemId] = @RequestFormItemId AND [Version] = @Version";
                 return connection.Query<RequestFormItem>(query, 
                     new {
@@ -112,7 +114,8 @@ namespace DxSyncClient.VesselInventory.Repository
                             ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom] ,[Priority] ,[Reason] ,[Remarks]
                             ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty] ,[LastRequestDate]
                             ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
-                            ,[CreatedBy] ,[LastModifiedDate] ,[ApprovedQty] ,[LastModifiedBy] ,[IsHidden], [ClientId] ,[Version]
+                            ,[CreatedBy] ,[LastModifiedDate] ,[ApprovedQty] ,[LastModifiedBy] 
+                            ,[IsHidden], [ClientId] ,[Version], [IsDocumentPending]
                       FROM [dbo].[In_RequestFormItem] WHERE [RequestFormItemId] = @RequestFormItemId AND [Version] = @Version
                       ORDER BY [Version]";
                 return connection.Query<RequestFormItem>(query, 
@@ -134,14 +137,13 @@ namespace DxSyncClient.VesselInventory.Repository
                        ,[BrandTypeId] ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom]
                        ,[Priority] ,[Reason] ,[Remarks] ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty]
                        ,[LastRequestDate] ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
-                       ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden], [ApprovedQty])
+                       ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden], [ApprovedQty], [IsDocumentPending])
                      VALUES 
                        (@RequestFormItemId ,@ClientId ,@Version ,@RequestFormId ,@ItemId ,@ItemName ,@ItemGroupId ,@ItemDimensionNumber
                        ,@BrandTypeId ,@BrandTypeName ,@ColorSizeId ,@ColorSizeName ,@Qty ,@Uom ,@Priority
                        ,@Reason ,@Remarks ,@AttachmentPath ,@ItemStatus ,@LastRequestQty ,@LastRequestDate
                        ,@LastSupplyQty ,@LastSupplyDate ,@Rob ,@SyncStatus ,@CreatedDate ,@CreatedBy ,@LastModifiedDate
-                       ,@LastModifiedBy ,@IsHidden, @ApprovedQty)";
-
+                       ,@LastModifiedBy ,@IsHidden, @ApprovedQty, @IsDocumentPending)";
                 connection.Execute(query, requestFormItems);
             }
         }
@@ -171,19 +173,34 @@ namespace DxSyncClient.VesselInventory.Repository
                 IDbCommand command = connection.CreateCommand();
                 command.CommandText = query;
                 connection.Open();
+
                 IList<DxSyncOutRecordStage> syncOutRecordStages = new List<DxSyncOutRecordStage>();
                 IList<int> requestFormItemIds = new List<int>();
+                IList<RequestFormItem> requestFormItems = new List<RequestFormItem>();
+
                 using (IDataReader reader = command.ExecuteReader())
                 {
                     while (reader.Read())
                     {
                         var requestFormItemId = reader["RequestFormItemId"].ToString();
-                        string attachment = reader["AttachmentPath"].ToString();
+                        var attachment = reader["AttachmentPath"].ToString();
 
-                        var version = GetMaxVersionSyncOut(requestFormItemId, typeof(RequestFormItem).Name);
-                        requestFormItemIds.Add(int.Parse(requestFormItemId));
+                        var version = GetMaxVersionSyncOut(requestFormItemId, typeof(RequestFormItem).Name) + 1;
 
-                        syncOutRecordStages.Add(new DxSyncOutRecordStage
+                        var parent = new DxSyncOutRecordStage
+                        {
+                            ClientId = SetupEnvironment.Client.ClientId,
+                            DataCount = 1,
+                            EntityName = typeof(RequestFormItem).Name,
+                            IsFile = false,
+                            LastSyncAt = DateTime.Now,
+                            RecordStageParentId = SetupEnvironment.HelperValue.Root,
+                            RecordStageId = Guid.NewGuid().ToString(),
+                            StatusStage = DxSyncStatusStage.UN_SYNC,
+                            ReferenceId = requestFormItemId,
+                            Version = version
+                        };
+                        var child = new DxSyncOutRecordStage
                         {
                             ClientId = SetupEnvironment.Client.ClientId,
                             DataCount = 0,
@@ -191,12 +208,61 @@ namespace DxSyncClient.VesselInventory.Repository
                             IsFile = true,
                             LastSyncAt = DateTime.Now,
                             Filename = attachment,
-                            RecordStageParentId = SetupEnvironment.HelperValue.Root,
+                            RecordStageParentId = parent.RecordStageId,
                             RecordStageId = Guid.NewGuid().ToString(),
                             StatusStage = DxSyncStatusStage.UN_SYNC,
                             ReferenceId = requestFormItemId,
-                            Version = version + 1
-                        });
+                            Version = version
+                        };
+                        var approvedQty = string.IsNullOrWhiteSpace(reader["ApprovedQty"].ToString()) ? "0" : reader["ApprovedQty"].ToString();
+                        var refData = new RequestFormItem
+                        {
+                            ClientId = SetupEnvironment.Client.ClientId,
+                            RequestFormItemId = Convert.ToInt32(requestFormItemId),
+                            AttachmentPath = attachment,
+                            RequestFormId = Convert.ToInt32(reader["RequestFormId"]),
+                            ApprovedQty = Convert.ToDecimal(approvedQty),
+                            BrandTypeId = Convert.ToString(reader["BrandTypeId"]),
+                            BrandTypeName = Convert.ToString(reader["BrandTypeName"]),
+                            ColorSizeId = Convert.ToString(reader["ColorSizeId"]),
+                            ColorSizeName = Convert.ToString(reader["ColorSizeName"]),
+                            CreatedBy = Convert.ToString(reader["CreatedBy"]),
+                            CreatedDate = Convert.ToDateTime(reader["CreatedDate"]),
+                            IsHidden = Convert.ToBoolean(reader["IsHidden"]),
+                            ItemDimensionNumber = Convert.ToString(reader["ItemDimensionNumber"]),
+                            ItemGroupId = Convert.ToInt32(reader["ItemGroupId"]),
+                            ItemId = Convert.ToInt32(reader["ItemId"]),
+                            ItemName = Convert.ToString(reader["ItemName"]),
+                            ItemStatus = Convert.ToString(reader["ItemStatus"]),
+                            IsDocumentPending = Convert.ToBoolean(reader["IsDocumentPending"]),
+                            LastModifiedBy = Convert.ToString(reader["LastModifiedBy"]),
+                            LastRequestQty = Convert.ToDecimal(reader["LastRequestQty"]),
+                            LastSupplyQty = Convert.ToDecimal(reader["LastSupplyQty"]),
+                            Priority = Convert.ToString(reader["Priority"]),
+                            Qty = Convert.ToDecimal(reader["Qty"]),
+                            Reason = Convert.ToString(reader["Reason"]),
+                            Remarks = Convert.ToString(reader["Remarks"]),
+                            Rob = Convert.ToDecimal(reader["Rob"]),
+                            SyncStatus = Convert.ToString(reader["SyncStatus"]),
+                            Uom = Convert.ToString(reader["Uom"]),
+                            Version = version
+                        };
+                        if (reader["LastRequestDate"].ToString() != "")
+                        {
+                            refData.LastRequestDate = Convert.ToDateTime(reader["LastRequestDate"].ToString());
+                        }
+                        if (reader["LastModifiedDate"].ToString() != "")
+                        {
+                            refData.LastModifiedDate = Convert.ToDateTime(reader["LastModifiedDate"].ToString());
+                        }
+                        if (reader["LastSupplyDate"].ToString() != "")
+                        {
+                            refData.LastSupplyDate = Convert.ToDateTime(reader["LastSupplyDate"].ToString());
+                        }
+                        requestFormItemIds.Add(Convert.ToInt32(requestFormItemId));
+                        syncOutRecordStages.Add(parent);
+                        syncOutRecordStages.Add(child);
+                        requestFormItems.Add(refData);
                     }
                 }
                 if (requestFormItemIds.Count() > 0)
@@ -204,6 +270,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     using(TransactionScope scope = new TransactionScope())
                     {
                         CreateStagingSyncOut(syncOutRecordStages);
+                        ResyncCopyRequestFormItemToStagingOut(requestFormItems);
                         using (IDbConnection connection2 = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
                         {
                             connection2.Open();
@@ -279,6 +346,27 @@ namespace DxSyncClient.VesselInventory.Repository
             }
         }
 
+        private void ResyncCopyRequestFormItemToStagingOut(IList<RequestFormItem> requestFormItems)
+        {
+            using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
+            {
+                connection.Open();
+                var query =
+                    @"INSERT INTO [dbo].[Out_RequestFormItem]
+                       ([RequestFormItemId] ,[ClientId] ,[Version] ,[RequestFormId] ,[ItemId] ,[ItemName] ,[ItemGroupId] ,[ItemDimensionNumber]
+                       ,[BrandTypeId] ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom]
+                       ,[Priority] ,[Reason] ,[Remarks] ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty]
+                       ,[LastRequestDate] ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
+                       ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden] ,[ApprovedQty], [IsDocumentPending])
+                     VALUES 
+                       (@RequestFormItemId ,@ClientId ,@Version ,@RequestFormId ,@ItemId ,@ItemName ,@ItemGroupId ,@ItemDimensionNumber
+                       ,@BrandTypeId ,@BrandTypeName ,@ColorSizeId ,@ColorSizeName ,@Qty ,@Uom ,@Priority
+                       ,@Reason ,@Remarks ,@AttachmentPath ,@ItemStatus ,@LastRequestQty ,@LastRequestDate
+                       ,@LastSupplyQty ,@LastSupplyDate ,@Rob ,@SyncStatus ,@CreatedDate ,@CreatedBy ,@LastModifiedDate
+                       ,@LastModifiedBy ,@IsHidden, @ApprovedQty, @IsDocumentPending)";
+                connection.Execute(query, requestFormItems);
+            }
+        }
         private void CopyRequestFormItemToStagingOut(IEnumerable<int> requestFormIds)
         {
             using (IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBSyncClientVesselInventory))
@@ -290,14 +378,13 @@ namespace DxSyncClient.VesselInventory.Repository
                        ,[BrandTypeId] ,[BrandTypeName] ,[ColorSizeId] ,[ColorSizeName] ,[Qty] ,[Uom]
                        ,[Priority] ,[Reason] ,[Remarks] ,[AttachmentPath] ,[ItemStatus] ,[LastRequestQty]
                        ,[LastRequestDate] ,[LastSupplyQty] ,[LastSupplyDate] ,[Rob] ,[SyncStatus] ,[CreatedDate]
-                       ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden] ,[ApprovedQty])
+                       ,[CreatedBy] ,[LastModifiedDate] ,[LastModifiedBy] ,[IsHidden] ,[ApprovedQty], [IsDocumentPending])
                      VALUES 
                        (@RequestFormItemId ,@ClientId ,@Version ,@RequestFormId ,@ItemId ,@ItemName ,@ItemGroupId ,@ItemDimensionNumber
                        ,@BrandTypeId ,@BrandTypeName ,@ColorSizeId ,@ColorSizeName ,@Qty ,@Uom ,@Priority
                        ,@Reason ,@Remarks ,@AttachmentPath ,@ItemStatus ,@LastRequestQty ,@LastRequestDate
                        ,@LastSupplyQty ,@LastSupplyDate ,@Rob ,@SyncStatus ,@CreatedDate ,@CreatedBy ,@LastModifiedDate
-                       ,@LastModifiedBy ,@IsHidden, @ApprovedQty)";
-
+                       ,@LastModifiedBy ,@IsHidden, @ApprovedQty, @IsDocumentPending)";
                 connection.Execute(query, GetRequestFormItems(requestFormIds));
             }
         }
