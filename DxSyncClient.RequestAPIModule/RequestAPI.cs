@@ -1,6 +1,7 @@
 ﻿using DxSync.Common;
 using Newtonsoft.Json;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -44,10 +45,12 @@ namespace DxSyncClient.RequestAPIModule
 
         public async Task<ResponseData> PostAsync()
         {
+
             using (HttpClient client = new HttpClient())
             {
                 try
                 {
+                    ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
                     var url = _url + _queryParameters;
                     string body = JsonConvert.SerializeObject(_body);
                     string contentType = "application/json";
@@ -60,6 +63,7 @@ namespace DxSyncClient.RequestAPIModule
                             client.DefaultRequestHeaders.Add(header.Key, header.Value);
                         }
                     }
+                    client.DefaultRequestHeaders.Accept.Clear();
                     var result = await client.PostAsync(url, content);
                     var responseData = result.Content.ReadAsStringAsync().Result;
                     return JsonConvert.DeserializeObject<ResponseData>(responseData);
@@ -80,6 +84,7 @@ namespace DxSyncClient.RequestAPIModule
             {
                 try
                 {
+                    ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
                     string data = JsonConvert.SerializeObject(objbody);
                     string contentType = "application/json";
                     var content = new StringContent(data, Encoding.UTF8, contentType);
@@ -112,6 +117,8 @@ namespace DxSyncClient.RequestAPIModule
             {
                 try
                 {
+                    ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
+                    client.DefaultRequestHeaders.Accept.Clear();
                     var result = await client.GetAsync(url);
                     var responseData = result.Content.ReadAsStringAsync().Result;
                     return JsonConvert.DeserializeObject<ResponseData>(responseData);
@@ -132,6 +139,7 @@ namespace DxSyncClient.RequestAPIModule
             {
                 try
                 {
+                    ServicePointManager.ServerCertificateValidationCallback += (sender, cert, chain, sslPolicyErrors) => true;
                     var result = await client.GetAsync(_url);
                     var responseData = result.Content.ReadAsStringAsync().Result;
                     return JsonConvert.DeserializeObject<ResponseData>(responseData);
