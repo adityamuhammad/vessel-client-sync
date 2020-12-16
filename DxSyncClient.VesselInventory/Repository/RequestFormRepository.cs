@@ -79,7 +79,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         RequestFormId = requestFormId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
         }
 

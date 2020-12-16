@@ -23,7 +23,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         ItemId = itemId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
             
 

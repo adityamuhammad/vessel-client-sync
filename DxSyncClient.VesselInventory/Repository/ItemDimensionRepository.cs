@@ -78,7 +78,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 return connection.Query<ItemDimension>(query, new {
                         ItemDimensionNumber = itemDimensionNumber,
                         Version = version
-                }).SingleOrDefault();
+                }).FirstOrDefault();
             }
         }
 

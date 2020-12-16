@@ -104,7 +104,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         VesselGoodJournalId = vesselGoodJournalId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
         }
 

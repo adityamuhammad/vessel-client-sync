@@ -68,7 +68,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         VesselGoodIssuedId = vesselGoodIssuedId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
         }
         public VesselGoodIssuedItem GetVesselGoodIssuedItem(string vesselGoodIssuedItemId, int version)
@@ -91,7 +91,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         VesselGoodIssuedItemId = vesselGoodIssuedItemId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
         }
 
@@ -168,7 +168,7 @@ namespace DxSyncClient.VesselInventory.Repository
             var vesselGoodIssuedItemId = reader["VesselGoodIssuedItemId"].ToString();
             var vesselGoodIssuedId = reader["VesselGoodIssuedId"].ToString();
 
-            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodIssuedId).SingleOrDefault();
+            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodIssuedId).FirstOrDefault();
 
             var recordStageId = Guid.NewGuid().ToString();
             var recordStageParentId = parent.RecordStageId;

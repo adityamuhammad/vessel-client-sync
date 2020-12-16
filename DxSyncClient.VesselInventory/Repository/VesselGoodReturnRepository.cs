@@ -71,7 +71,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         VesselGoodReturnId = vesselGoodReturnId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
         }
 
@@ -97,7 +97,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         VesselGoodReturnItemId = vesselGoodReturnItemId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
 
         }
@@ -107,7 +107,7 @@ namespace DxSyncClient.VesselInventory.Repository
             var vesselGoodReturnItemId = reader["VesselGoodReturnItemId"].ToString();
             var vesselGoodReturnId = reader["VesselGoodReturnId"].ToString();
 
-            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodReturnId).SingleOrDefault();
+            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodReturnId).FirstOrDefault();
 
             var recordStageId = Guid.NewGuid().ToString();
             var recordStageParentId = parent.RecordStageId;
@@ -177,7 +177,7 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
-                string query = @"SELECT *
+                string query = $@"SELECT *, {SetupEnvironment.Client.ClientId} AS ClientId, {1} AS Version
                                 FROM [dbo].[VesselGoodReturn]
                                 WHERE  [CreatedDate] < DATEADD(HOUR, -1, GETDATE())
                                 AND [IsHidden] = 0 AND SyncStatus = 'NOT SYNC'";

@@ -54,7 +54,7 @@ namespace DxSyncClient.VesselInventory.Repository
                                                ,@ColorSizeName ,@Qty ,@Uom
                                                ,@SyncStatus ,@CreatedDate ,@CreatedBy
                                                ,@LastModifiedDate ,@LastModifiedBy ,@IsHidden)";
-                            var documentNumber = connection.Query<string>("SELECT [VesselGoodReceiveNumber] FROM [dbo].[VesselGoodReceive] WHERE [VesselGoodReceiveId] = @VesselGoodReceiveId", new { refData.VesselGoodReceiveId }).SingleOrDefault();
+                            var documentNumber = connection.Query<string>("SELECT [VesselGoodReceiveNumber] FROM [dbo].[VesselGoodReceive] WHERE [VesselGoodReceiveId] = @VesselGoodReceiveId", new { refData.VesselGoodReceiveId }).FirstOrDefault();
                             var goodJournal = new VesselGoodJournal
                             {
                                 BrandTypeId = refData.BrandTypeId,
@@ -187,7 +187,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         VesselGoodReceiveId = vesselGoodReceiveId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
         }
         public VesselGoodReceiveItem GetVesselGoodReceiveItemIn(string vesselGoodReceiveItemId, int version)
@@ -207,7 +207,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         VesselGoodReceiveItemId = vesselGoodReceiveItemId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
         }
 
@@ -227,7 +227,7 @@ namespace DxSyncClient.VesselInventory.Repository
                     new {
                         VesselGoodReceiveItemRejectId = vesselGoodReceiveItemRejectId,
                         Version = version
-                    }).SingleOrDefault();
+                    }).FirstOrDefault();
             }
 
         }
@@ -237,7 +237,7 @@ namespace DxSyncClient.VesselInventory.Repository
             var vesselGoodReceiveItemRejectId = reader["VesselGoodReceiveItemRejectId"].ToString();
             var vesselGoodReceiveId = reader["VesselGoodReceiveId"].ToString();
 
-            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodReceiveId).SingleOrDefault();
+            var parent = syncRecordStages.Where(x => x.ReferenceId == vesselGoodReceiveId).FirstOrDefault();
 
             var recordStageId = Guid.NewGuid().ToString();
             var recordStageParentId = parent.RecordStageId;
@@ -364,10 +364,10 @@ namespace DxSyncClient.VesselInventory.Repository
         {
             using(IDbConnection connection = DbConnectionFactory.GetConnection(DbConnectionFactory.DBConnectionString.DBVesselInventory))
             {
-                string query = @"SELECT *
+                string query = $@"SELECT *, {SetupEnvironment.Client.ClientId} AS ClientId, {1} AS Version
                                 FROM [dbo].[VesselGoodReceive]
                                 WHERE  [CreatedDate] < DATEADD(HOUR, -1, GETDATE())
-                                AND [IsHidden] = 0 AND SyncStatus = 'NOT SYNC'";
+                                and [IsHidden] = 0 AND SyncStatus = 'NOT SYNC'";
                 return connection.Query<VesselGoodReceive>(query).ToList();
             }
         }
@@ -379,7 +379,7 @@ namespace DxSyncClient.VesselInventory.Repository
                 string query = @"SELECT [VesselGoodReceiveId]
                                 FROM [dbo].[VesselGoodReceive]
                                 WHERE  [CreatedDate] < DATEADD(HOUR, -1, GETDATE())
-                                AND [IsHidden] = 0 AND SyncStatus = 'NOT SYNC'";
+                                and [IsHidden] = 0 AND SyncStatus = 'NOT SYNC'";
                 return connection.Query<int>(query).ToList();
             }
         }
