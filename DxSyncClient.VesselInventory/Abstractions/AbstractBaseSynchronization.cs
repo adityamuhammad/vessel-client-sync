@@ -131,7 +131,7 @@ namespace DxSyncClient.VesselInventory.Abstractions
 
         private bool CheckAnySyncIn(DxSyncRecordStage syncRecordStage)
         {
-            var responseData = PostData(RequestAPIModule.APISyncEndpoint.SyncInCheck, syncRecordStage);
+            var responseData = PostData(APISyncEndpoint.SyncInCheck, syncRecordStage);
             if (responseData == null) return false;
             int totalSyncIn = (int)((JObject)responseData.Data).SelectToken("NumberOfSyncIn");
             if (totalSyncIn > 0) return true;
@@ -140,18 +140,30 @@ namespace DxSyncClient.VesselInventory.Abstractions
 
         private void ReceiveData<T>(DxSyncRecordStage syncRecordStage)
         {
-            var responseData = PostData(RequestAPIModule.APISyncEndpoint.SyncIn, syncRecordStage);
-            var syncInRecordStages = JsonConvert.DeserializeObject<IList<DxSyncInRecordStage>>(responseData.Data.ToString());
+            try
+            {
+                var responseData = PostData(APISyncEndpoint.SyncIn, syncRecordStage);
+                var syncInRecordStages = JsonConvert.DeserializeObject<IList<DxSyncInRecordStage>>(responseData.Data.ToString());
 
-            ProcessSyncIn<T>(syncInRecordStages);
+                ProcessSyncIn<T>(syncInRecordStages);
+            } catch (Exception e)
+            {
+                Console.Write(e.ToString());
+            }
         }
 
         private void ProcessSyncIn<T>(IList<DxSyncInRecordStage> syncInRecordStages)
         {
             foreach (var recordStage in syncInRecordStages)
             {
-                var reference = JsonConvert.DeserializeObject<T>(recordStage.ReferenceData.ToString());
-                CreateRowTransaction(recordStage, reference);
+                try
+                {
+                    var reference = JsonConvert.DeserializeObject<T>(recordStage.ReferenceData.ToString());
+                    CreateRowTransaction(recordStage, reference);
+                } catch (Exception e)
+                {
+                    Console.Write(e.ToString());
+                }
             }
         }
 
